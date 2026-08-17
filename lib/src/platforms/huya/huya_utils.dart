@@ -77,6 +77,8 @@ Future<List<LiveSuperChatMessage>> getHuyaSuperChatMessageList(
   if (first) {
     return messages;
   } else {
+    // huya 按money->level->countDown 排序 调整为 startTime
+    messages.sort((a, b) => a.startTime.compareTo(b.startTime));
     return [messages.last];
   }
 }
