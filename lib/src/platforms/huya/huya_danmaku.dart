@@ -8,15 +8,19 @@ import 'package:simple_live_core/src/model/tars/huya_danmaku.dart';
 import 'package:tars_dart/tars/codec/tars_input_stream.dart';
 import 'package:tars_dart/tars/codec/tars_output_stream.dart';
 
+import 'huya_utils.dart';
+
 class HuyaDanmakuArgs {
   final int ayyuid;
   final int topSid;
   final int subSid;
+
   HuyaDanmakuArgs({
     required this.ayyuid,
     required this.topSid,
     required this.subSid,
   });
+
   @override
   String toString() {
     return json.encode({
@@ -83,8 +87,7 @@ class HuyaDanmaku implements LiveDanmaku {
   }
 
   void joinRoom() {
-    var joinData =
-        getJoinData(danmakuArgs.ayyuid);
+    var joinData = getJoinData(danmakuArgs.ayyuid);
     webScoketUtils?.sendMessage(joinData);
   }
 
@@ -122,7 +125,7 @@ class HuyaDanmaku implements LiveDanmaku {
     webScoketUtils?.close();
   }
 
-  void decodeMessage(List<int> data) {
+  Future<void> decodeMessage(List<int> data) async {
     try {
       var stream = TarsInputStream(Uint8List.fromList(data));
       var type = stream.read(0, 0, false);
@@ -162,6 +165,20 @@ class HuyaDanmaku implements LiveDanmaku {
               userName: "",
             ),
           );
+        } else if (wSPushMessage.uri == 2001314) {
+          // socket 2001314 maybe not right
+          var sc = await getHuyaSuperChatMessageList(lPid: danmakuArgs.topSid);
+          if (sc.isNotEmpty) {
+            onMessage?.call(
+              LiveMessage(
+                type: LiveMessageType.superChat,
+                userName: "SUPER_CHAT_MESSAGE",
+                message: "SUPER_CHAT_MESSAGE",
+                color: LiveMessageColor.white,
+                data: sc.first,
+              ),
+            );
+          }
         }
       }
     } catch (e) {
