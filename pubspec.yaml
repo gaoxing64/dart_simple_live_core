@@ -1,7 +1,7 @@
 name: simple_live_core
 version: 1.1.0
 description: "聚合直播核心库（Rust Core + FRB 绑定层）"
-repository: https://github.com/xiaoyaocz/dart_simple_live
+repository: https://github.com/gaoxing64/dart_simple_live_core
 publish_to: "none"
 environment: 
   sdk: '>=3.0.5 <4.0.0'
