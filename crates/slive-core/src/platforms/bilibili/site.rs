@@ -10,8 +10,8 @@ use serde_json::Value;
 use crate::error::SliveError;
 use crate::http::{HttpRequest, HttpTransport, ReqwestTransport};
 use crate::models::{
-    LiveCategory, LiveCategoryResult, LivePlayQuality, LivePlayUrl, LiveRoomDetail,
-    LiveSearchAnchorResult, LiveSearchRoomResult, LiveSubCategory, LiveSuperChatMessage,
+    LiveCategory, LiveCategoryResult, LivePlayQuality, LivePlayUrl, LiveRoomDetail, LiveSearchAnchorResult,
+    LiveSearchRoomResult, LiveSubCategory, LiveSuperChatMessage,
 };
 use crate::time::{SystemClock, TimeSource};
 
@@ -144,11 +144,7 @@ impl BilibiliSite {
     }
 
     /// 携带标准头（含 buvid）发起 GET 并解析 JSON。
-    pub(crate) async fn get_json(
-        &self,
-        url: &str,
-        query: Vec<(String, String)>,
-    ) -> Result<Value, SliveError> {
+    pub(crate) async fn get_json(&self, url: &str, query: Vec<(String, String)>) -> Result<Value, SliveError> {
         let headers = super::header::build_header(self).await?;
         let request = HttpRequest {
             url: url.to_string(),
@@ -184,20 +180,12 @@ impl BilibiliSite {
     }
 
     /// F-04 搜索房间。
-    pub async fn search_rooms(
-        &self,
-        keyword: String,
-        page: i32,
-    ) -> Result<LiveSearchRoomResult, SliveError> {
+    pub async fn search_rooms(&self, keyword: String, page: i32) -> Result<LiveSearchRoomResult, SliveError> {
         super::search::search_rooms(self, &keyword, page).await
     }
 
     /// F-05 搜索主播。
-    pub async fn search_anchors(
-        &self,
-        keyword: String,
-        page: i32,
-    ) -> Result<LiveSearchAnchorResult, SliveError> {
+    pub async fn search_anchors(&self, keyword: String, page: i32) -> Result<LiveSearchAnchorResult, SliveError> {
         super::search::search_anchors(self, &keyword, page).await
     }
 
@@ -207,10 +195,7 @@ impl BilibiliSite {
     }
 
     /// F-07 清晰度列表。
-    pub async fn get_play_qualities(
-        &self,
-        detail: LiveRoomDetail,
-    ) -> Result<Vec<LivePlayQuality>, SliveError> {
+    pub async fn get_play_qualities(&self, detail: LiveRoomDetail) -> Result<Vec<LivePlayQuality>, SliveError> {
         super::play::fetch_qualities(self, &detail).await
     }
 
@@ -229,10 +214,7 @@ impl BilibiliSite {
     }
 
     /// F-10 房间 SC 列表（方法名复数，对齐上游；见 J-4）。
-    pub async fn get_super_chat_messages(
-        &self,
-        room_id: String,
-    ) -> Result<Vec<LiveSuperChatMessage>, SliveError> {
+    pub async fn get_super_chat_messages(&self, room_id: String) -> Result<Vec<LiveSuperChatMessage>, SliveError> {
         super::super_chat::fetch(self, &room_id).await
     }
 
@@ -247,18 +229,16 @@ impl BilibiliSite {
     }
 
     /// F-19 扫码轮询。
-    pub async fn get_qr_poll_result(
-        &self,
-        qrcode_key: String,
-    ) -> Result<crate::models::QrPollResult, SliveError> {
+    pub async fn get_qr_poll_result(&self, qrcode_key: String) -> Result<crate::models::QrPollResult, SliveError> {
         super::account::get_qr_poll_result(self, &qrcode_key).await
     }
 
     /// F-20 账号信息（成功时回填 `user_id` 副作用）。
-    pub async fn get_account_info(
-        &self,
-        credential: String,
-    ) -> Result<crate::models::AccountInfo, SliveError> {
+    pub async fn get_account_info(&self, credential: String) -> Result<crate::models::AccountInfo, SliveError> {
         super::account::get_account_info(self, &credential).await
     }
 }
+
+use crate::platforms::macros::impl_live_site;
+
+impl_live_site!(BilibiliSite);

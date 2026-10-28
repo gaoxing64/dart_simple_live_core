@@ -16,8 +16,7 @@ use crate::error::SliveError;
 use crate::http::{HttpRequest, HttpTransport, ReqwestTransport};
 use crate::models::{
     AccountInfo, LiveCategory, LiveCategoryResult, LivePlayQuality, LivePlayUrl, LiveRoomDetail,
-    LiveSearchAnchorResult, LiveSearchRoomResult, LiveSubCategory, LiveSuperChatMessage, QrCode,
-    QrPollResult,
+    LiveSearchAnchorResult, LiveSearchRoomResult, LiveSubCategory, LiveSuperChatMessage, QrCode, QrPollResult,
 };
 use crate::time::{SystemClock, TimeSource};
 
@@ -186,20 +185,12 @@ impl DouyinSite {
     }
 
     /// 搜索房间。
-    pub async fn search_rooms(
-        &self,
-        keyword: String,
-        page: i32,
-    ) -> Result<LiveSearchRoomResult, SliveError> {
+    pub async fn search_rooms(&self, keyword: String, page: i32) -> Result<LiveSearchRoomResult, SliveError> {
         super::search::search_rooms(self, &keyword, page).await
     }
 
     /// 搜索主播（抖音不支持，恒报错 —— 对齐 Dart 的抛异常口径）。
-    pub async fn search_anchors(
-        &self,
-        _keyword: String,
-        _page: i32,
-    ) -> Result<LiveSearchAnchorResult, SliveError> {
+    pub async fn search_anchors(&self, _keyword: String, _page: i32) -> Result<LiveSearchAnchorResult, SliveError> {
         Err(SliveError::Api {
             code: -1,
             message: "抖音暂不支持搜索主播，请直接搜索直播间".to_string(),
@@ -212,10 +203,7 @@ impl DouyinSite {
     }
 
     /// 清晰度列表（本地计算，输入是 `detail.data` 的 JSON 串，无网络请求）。
-    pub async fn get_play_qualities(
-        &self,
-        detail: LiveRoomDetail,
-    ) -> Result<Vec<LivePlayQuality>, SliveError> {
+    pub async fn get_play_qualities(&self, detail: LiveRoomDetail) -> Result<Vec<LivePlayQuality>, SliveError> {
         super::play::fetch_qualities(self, &detail)
     }
 
@@ -234,10 +222,7 @@ impl DouyinSite {
     }
 
     /// 房间 SC 列表（抖音无此能力，恒空 —— 对齐 Dart）。
-    pub async fn get_super_chat_messages(
-        &self,
-        _room_id: String,
-    ) -> Result<Vec<LiveSuperChatMessage>, SliveError> {
+    pub async fn get_super_chat_messages(&self, _room_id: String) -> Result<Vec<LiveSuperChatMessage>, SliveError> {
         Ok(Vec::new())
     }
 
@@ -285,8 +270,7 @@ mod tests {
         site.merge_ttwid("ttwid=1%2Cabc");
         assert_eq!(site.header_cookie(), "ttwid=1%2Cabc");
 
-        site.set_site_attrs(r#"{"cookie":"odin_tt=xyz"}"#)
-            .expect("注入合法");
+        site.set_site_attrs(r#"{"cookie":"odin_tt=xyz"}"#).expect("注入合法");
         assert_eq!(
             site.header_cookie(),
             "ttwid=1%2Cabc; odin_tt=xyz",
@@ -325,14 +309,18 @@ mod tests {
             site.search_anchors("k".into(), 1).await,
             Err(SliveError::Api { code: -1, .. })
         ));
-        assert!(matches!(
-            site.get_qr_code().await,
-            Err(SliveError::NotFound(_))
-        ));
+        assert!(matches!(site.get_qr_code().await, Err(SliveError::NotFound(_))));
         assert!(matches!(
             site.get_qr_poll_result("k".into()).await,
             Err(SliveError::NotFound(_))
         ));
-        assert_eq!(site.get_super_chat_messages("1".into()).await.expect("恒空"), Vec::new());
+        assert_eq!(
+            site.get_super_chat_messages("1".into()).await.expect("恒空"),
+            Vec::new()
+        );
     }
 }
+
+use crate::platforms::macros::impl_live_site;
+
+impl_live_site!(DouyinSite);

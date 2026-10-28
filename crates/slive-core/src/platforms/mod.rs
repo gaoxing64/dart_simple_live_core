@@ -5,8 +5,13 @@
 //! `pub mod twitch;` 被覆盖丢失导致全量编译失败）。需要新增平台模块时，
 //! 在回传清单里告知总监，由总监统一接线。
 
+mod macros;
+
 pub mod bilibili;
 pub mod douyin;
 pub mod douyu;
 pub mod huya;
+pub mod live_site;
 pub mod twitch;
+
+pub use live_site::{all_platforms, create_site, LiveSite, Platform};

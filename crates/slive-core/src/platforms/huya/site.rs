@@ -13,13 +13,13 @@ use std::sync::{Arc, Mutex};
 use crate::error::SliveError;
 use crate::http::{HttpRequest, HttpTransport, ReqwestTransport};
 use crate::models::{
-    LiveCategory, LiveCategoryResult, LivePlayQuality, LivePlayUrl, LiveRoomDetail,
-    LiveSearchAnchorResult, LiveSearchRoomResult, LiveSubCategory, LiveSuperChatMessage,
+    LiveCategory, LiveCategoryResult, LivePlayQuality, LivePlayUrl, LiveRoomDetail, LiveSearchAnchorResult,
+    LiveSearchRoomResult, LiveSubCategory, LiveSuperChatMessage,
 };
 use crate::time::{SystemClock, TimeSource};
 
-use super::common::DEFAULT_HYSDK_UA;
 use super::account::UnavailablePost;
+use super::common::DEFAULT_HYSDK_UA;
 use super::tup::{PostBytesTransport, ReqwestPostTransport};
 
 /// 虎牙站点实例。
@@ -117,11 +117,7 @@ impl HuyaSite {
     }
 
     /// 带标准头发起 GET 并返回响应文本。
-    pub(crate) async fn get_text(
-        &self,
-        url: &str,
-        query: Vec<(String, String)>,
-    ) -> Result<String, SliveError> {
+    pub(crate) async fn get_text(&self, url: &str, query: Vec<(String, String)>) -> Result<String, SliveError> {
         Ok(self.get_reply(url, query).await?.text)
     }
 
@@ -154,10 +150,7 @@ impl HuyaSite {
     }
 
     /// F-01b 子分类（公开以便单独复用；`get_categories` 内部调用）。
-    pub async fn get_sub_categories(
-        &self,
-        parent_id: &str,
-    ) -> Result<Vec<LiveSubCategory>, SliveError> {
+    pub async fn get_sub_categories(&self, parent_id: &str) -> Result<Vec<LiveSubCategory>, SliveError> {
         super::categories::fetch_sub(self, parent_id).await
     }
 
@@ -181,20 +174,12 @@ impl HuyaSite {
     }
 
     /// F-04 搜索房间。
-    pub async fn search_rooms(
-        &self,
-        keyword: String,
-        page: i32,
-    ) -> Result<LiveSearchRoomResult, SliveError> {
+    pub async fn search_rooms(&self, keyword: String, page: i32) -> Result<LiveSearchRoomResult, SliveError> {
         super::search::search_rooms(self, &keyword, page).await
     }
 
     /// F-05 搜索主播。
-    pub async fn search_anchors(
-        &self,
-        keyword: String,
-        page: i32,
-    ) -> Result<LiveSearchAnchorResult, SliveError> {
+    pub async fn search_anchors(&self, keyword: String, page: i32) -> Result<LiveSearchAnchorResult, SliveError> {
         super::search::search_anchors(self, &keyword, page).await
     }
 
@@ -204,10 +189,7 @@ impl HuyaSite {
     }
 
     /// F-07 清晰度列表（跳过 4K：需 VIP）。
-    pub async fn get_play_qualities(
-        &self,
-        detail: LiveRoomDetail,
-    ) -> Result<Vec<LivePlayQuality>, SliveError> {
+    pub async fn get_play_qualities(&self, detail: LiveRoomDetail) -> Result<Vec<LivePlayQuality>, SliveError> {
         super::play::fetch_qualities(self, &detail)
     }
 
@@ -226,10 +208,7 @@ impl HuyaSite {
     }
 
     /// F-10 房间醒目留言列表（方法名复数，对齐上游；见 J-4）。
-    pub async fn get_super_chat_messages(
-        &self,
-        room_id: String,
-    ) -> Result<Vec<LiveSuperChatMessage>, SliveError> {
+    pub async fn get_super_chat_messages(&self, room_id: String) -> Result<Vec<LiveSuperChatMessage>, SliveError> {
         super::super_chat::fetch(self, &room_id).await
     }
 
@@ -244,18 +223,12 @@ impl HuyaSite {
     }
 
     /// F-19 扫码轮询（同上，Dart 未实现）。
-    pub async fn get_qr_poll_result(
-        &self,
-        qrcode_key: String,
-    ) -> Result<crate::models::QrPollResult, SliveError> {
+    pub async fn get_qr_poll_result(&self, qrcode_key: String) -> Result<crate::models::QrPollResult, SliveError> {
         super::account::get_qr_poll_result(qrcode_key).await
     }
 
     /// F-20 账号信息（同上，Dart 未实现）。
-    pub async fn get_account_info(
-        &self,
-        credential: String,
-    ) -> Result<crate::models::AccountInfo, SliveError> {
+    pub async fn get_account_info(&self, credential: String) -> Result<crate::models::AccountInfo, SliveError> {
         super::account::get_account_info(credential).await
     }
 }
@@ -298,3 +271,6 @@ mod tests {
         }
     }
 }
+use crate::platforms::macros::impl_live_site;
+
+impl_live_site!(HuyaSite);

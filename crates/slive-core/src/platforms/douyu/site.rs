@@ -13,8 +13,8 @@ use serde_json::Value;
 use crate::error::SliveError;
 use crate::http::{HttpReply, HttpRequest, HttpTransport, ReqwestTransport};
 use crate::models::{
-    LiveCategory, LiveCategoryResult, LivePlayQuality, LivePlayUrl, LiveRoomDetail,
-    LiveSearchAnchorResult, LiveSearchRoomResult, LiveSubCategory, LiveSuperChatMessage,
+    LiveCategory, LiveCategoryResult, LivePlayQuality, LivePlayUrl, LiveRoomDetail, LiveSearchAnchorResult,
+    LiveSearchRoomResult, LiveSubCategory, LiveSuperChatMessage,
 };
 use crate::time::{SystemClock, TimeSource};
 
@@ -68,11 +68,7 @@ impl DouyuSite {
     }
 
     /// 依赖注入构造（供测试注入 mock 传输 / `FakeTime`）。
-    pub fn with_deps(
-        http: Arc<dyn HttpTransport>,
-        post: Arc<dyn DouyuPost>,
-        time: Arc<dyn TimeSource>,
-    ) -> Self {
+    pub fn with_deps(http: Arc<dyn HttpTransport>, post: Arc<dyn DouyuPost>, time: Arc<dyn TimeSource>) -> Self {
         Self {
             http,
             post,
@@ -240,20 +236,12 @@ impl DouyuSite {
     }
 
     /// F-04 搜索房间。
-    pub async fn search_rooms(
-        &self,
-        keyword: String,
-        page: i32,
-    ) -> Result<LiveSearchRoomResult, SliveError> {
+    pub async fn search_rooms(&self, keyword: String, page: i32) -> Result<LiveSearchRoomResult, SliveError> {
         super::search::search_rooms(self, &keyword, page).await
     }
 
     /// F-05 搜索主播。
-    pub async fn search_anchors(
-        &self,
-        keyword: String,
-        page: i32,
-    ) -> Result<LiveSearchAnchorResult, SliveError> {
+    pub async fn search_anchors(&self, keyword: String, page: i32) -> Result<LiveSearchAnchorResult, SliveError> {
         super::search::search_anchors(self, &keyword, page).await
     }
 
@@ -263,10 +251,7 @@ impl DouyuSite {
     }
 
     /// F-07 清晰度列表（`getH5PlayV1` + `sign`）。
-    pub async fn get_play_qualities(
-        &self,
-        detail: LiveRoomDetail,
-    ) -> Result<Vec<LivePlayQuality>, SliveError> {
+    pub async fn get_play_qualities(&self, detail: LiveRoomDetail) -> Result<Vec<LivePlayQuality>, SliveError> {
         super::play::fetch_qualities(self, &detail).await
     }
 
@@ -285,10 +270,7 @@ impl DouyuSite {
     }
 
     /// F-10 房间 SC 列表（斗鱼 HTTP 侧不提供，恒空 —— 对齐 Dart「尚不支持」）。
-    pub async fn get_super_chat_messages(
-        &self,
-        _room_id: String,
-    ) -> Result<Vec<LiveSuperChatMessage>, SliveError> {
+    pub async fn get_super_chat_messages(&self, _room_id: String) -> Result<Vec<LiveSuperChatMessage>, SliveError> {
         super::super_chat::fetch().await
     }
 
@@ -303,18 +285,12 @@ impl DouyuSite {
     }
 
     /// F-19 扫码轮询。
-    pub async fn get_qr_poll_result(
-        &self,
-        qrcode_key: String,
-    ) -> Result<crate::models::QrPollResult, SliveError> {
+    pub async fn get_qr_poll_result(&self, qrcode_key: String) -> Result<crate::models::QrPollResult, SliveError> {
         super::account::get_qr_poll_result(self, &qrcode_key).await
     }
 
     /// F-20 账号信息。
-    pub async fn get_account_info(
-        &self,
-        credential: String,
-    ) -> Result<crate::models::AccountInfo, SliveError> {
+    pub async fn get_account_info(&self, credential: String) -> Result<crate::models::AccountInfo, SliveError> {
         super::account::get_account_info(self, &credential).await
     }
 
@@ -327,11 +303,7 @@ impl DouyuSite {
         } else {
             dy_did.to_string()
         };
-        let token = if ltp0.is_empty() {
-            self.ltp0()
-        } else {
-            ltp0.to_string()
-        };
+        let token = if ltp0.is_empty() { self.ltp0() } else { ltp0.to_string() };
         let current = self.cookie();
         let new_cookie = super::cookie::refresh_cookie(self, &did, &token, &current).await?;
         self.set_cookie(&new_cookie);
@@ -383,3 +355,6 @@ mod tests {
             .is_empty());
     }
 }
+use crate::platforms::macros::impl_live_site;
+
+impl_live_site!(DouyuSite);

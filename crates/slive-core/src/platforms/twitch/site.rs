@@ -17,8 +17,8 @@ use serde_json::Value;
 use crate::error::SliveError;
 use crate::http::{HttpRequest, HttpTransport, ReqwestTransport};
 use crate::models::{
-    LiveCategory, LiveCategoryResult, LivePlayQuality, LivePlayUrl, LiveRoomDetail,
-    LiveSearchAnchorResult, LiveSearchRoomResult, LiveSubCategory, LiveSuperChatMessage,
+    LiveCategory, LiveCategoryResult, LivePlayQuality, LivePlayUrl, LiveRoomDetail, LiveSearchAnchorResult,
+    LiveSearchRoomResult, LiveSubCategory, LiveSuperChatMessage,
 };
 use crate::time::{SystemClock, TimeSource};
 
@@ -56,11 +56,7 @@ impl TwitchSite {
     }
 
     /// 依赖注入构造（供测试注入 `MockTransport` / `MockTwitchPost` / `FakeTime`）。
-    pub fn with_deps(
-        http: Arc<dyn HttpTransport>,
-        gql: Arc<dyn TwitchPost>,
-        time: Arc<dyn TimeSource>,
-    ) -> Self {
+    pub fn with_deps(http: Arc<dyn HttpTransport>, gql: Arc<dyn TwitchPost>, time: Arc<dyn TimeSource>) -> Self {
         Self {
             http,
             gql,
@@ -126,8 +122,8 @@ impl TwitchSite {
 
     /// 携带标准头 POST 一条 GQL 请求并解析 JSON。
     pub(crate) async fn post_gql(&self, body: &Value) -> Result<Value, SliveError> {
-        let payload = serde_json::to_string(body)
-            .map_err(|e| SliveError::decode(format!("序列化 GQL 请求失败: {e}")))?;
+        let payload =
+            serde_json::to_string(body).map_err(|e| SliveError::decode(format!("序列化 GQL 请求失败: {e}")))?;
         let reply = self
             .gql()
             .post_json(&PostRequest {
@@ -140,11 +136,7 @@ impl TwitchSite {
     }
 
     /// 带标准头发起 GET 并返回响应文本（usher m3u8 用）。
-    pub(crate) async fn get_text(
-        &self,
-        url: &str,
-        query: Vec<(String, String)>,
-    ) -> Result<String, SliveError> {
+    pub(crate) async fn get_text(&self, url: &str, query: Vec<(String, String)>) -> Result<String, SliveError> {
         let request = HttpRequest {
             url: url.to_string(),
             query,
@@ -178,20 +170,12 @@ impl TwitchSite {
     }
 
     /// F-04 搜索房间（Dart 抛异常 -> `Api(-1)`）。
-    pub async fn search_rooms(
-        &self,
-        keyword: String,
-        page: i32,
-    ) -> Result<LiveSearchRoomResult, SliveError> {
+    pub async fn search_rooms(&self, keyword: String, page: i32) -> Result<LiveSearchRoomResult, SliveError> {
         super::unsupported::search_rooms(&keyword, page)
     }
 
     /// F-05 搜索主播（Dart 抛异常 -> `Api(-1)`）。
-    pub async fn search_anchors(
-        &self,
-        keyword: String,
-        page: i32,
-    ) -> Result<LiveSearchAnchorResult, SliveError> {
+    pub async fn search_anchors(&self, keyword: String, page: i32) -> Result<LiveSearchAnchorResult, SliveError> {
         super::unsupported::search_anchors(&keyword, page)
     }
 
@@ -201,10 +185,7 @@ impl TwitchSite {
     }
 
     /// F-07 清晰度列表（GQL token + usher m3u8 解析）。
-    pub async fn get_play_qualities(
-        &self,
-        detail: LiveRoomDetail,
-    ) -> Result<Vec<LivePlayQuality>, SliveError> {
+    pub async fn get_play_qualities(&self, detail: LiveRoomDetail) -> Result<Vec<LivePlayQuality>, SliveError> {
         super::play::fetch_qualities(self, &detail).await
     }
 
@@ -223,10 +204,7 @@ impl TwitchSite {
     }
 
     /// F-10 SC 列表（恒空）。
-    pub async fn get_super_chat_messages(
-        &self,
-        room_id: String,
-    ) -> Result<Vec<LiveSuperChatMessage>, SliveError> {
+    pub async fn get_super_chat_messages(&self, room_id: String) -> Result<Vec<LiveSuperChatMessage>, SliveError> {
         super::unsupported::super_chat(&room_id)
     }
 
@@ -241,18 +219,12 @@ impl TwitchSite {
     }
 
     /// F-19 扫码轮询（Dart 未实现 -> 报错）。
-    pub async fn get_qr_poll_result(
-        &self,
-        qrcode_key: String,
-    ) -> Result<crate::models::QrPollResult, SliveError> {
+    pub async fn get_qr_poll_result(&self, qrcode_key: String) -> Result<crate::models::QrPollResult, SliveError> {
         super::unsupported::qr_poll_result(&qrcode_key)
     }
 
     /// F-20 账号信息（Dart 未实现 -> 报错）。
-    pub async fn get_account_info(
-        &self,
-        credential: String,
-    ) -> Result<crate::models::AccountInfo, SliveError> {
+    pub async fn get_account_info(&self, credential: String) -> Result<crate::models::AccountInfo, SliveError> {
         super::unsupported::account_info(&credential)
     }
 }
@@ -260,3 +232,7 @@ impl TwitchSite {
 #[cfg(test)]
 #[path = "site_tests.rs"]
 mod tests;
+
+use crate::platforms::macros::impl_live_site;
+
+impl_live_site!(TwitchSite);
