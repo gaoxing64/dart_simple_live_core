@@ -1,0 +1,18 @@
+[package]
+name = "slive-ffi"
+version = "0.1.0"
+edition = "2021"
+description = "Simple Live C ABI：供 C#/WinUI3、C++/Qt/MyGUI、Rust 直接调用"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[dependencies]
+slive-core = { path = "../slive-core" }
+slive-host = { path = "../slive-host" }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+log = "0.4"
+futures-util = "0.3"

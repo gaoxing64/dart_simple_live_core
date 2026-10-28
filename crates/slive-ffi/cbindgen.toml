@@ -1,0 +1,16 @@
+# 可选：维护者本地 `cargo install cbindgen` 后手动生成 include/slive.h。
+# 头文件已入库且由 tests/header_sync.rs 校验常量一致性；本项目**不**把 cbindgen 作为依赖。
+language = "C"
+include_version = false
+documentation = true
+documentation_style = "doxy"
+cpp_compat = true
+include_guard = "SLIVE_H"
+tab_width = 4
+line_length = 100
+
+[export]
+prefix = ""
+include = ["SliveStr", "SliveHandle", "SliveConfig", "SliveCompletionFn", "SliveEventFn", "SliveLogFn"]
+
+[export.rename]
