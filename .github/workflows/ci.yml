@@ -1,0 +1,37 @@
+name: core-ci
+
+on:
+  push:
+    branches: [future, master, dev]
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: test (workspace)
+        run: cargo test --workspace
+
+      - name: clippy (new crates, deny warnings)
+        run: cargo clippy -p slive-core -p slive-host -p slive-ffi --all-targets -- -D warnings
+
+      - name: clippy (bridge crate)
+        run: cargo clippy -p rust_lib_simple_live_app --all-targets
+
+      - name: C header contract
+        run: cargo test -p slive-ffi --test header_sync
+
+      - name: FRB codegen drift
+        run: git diff --exit-code src/frb_generated.rs lib/src/rust/
