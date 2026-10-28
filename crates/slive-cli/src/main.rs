@@ -4,18 +4,11 @@
 
 mod danmaku;
 mod url;
-mod ws;
 
 use std::collections::HashMap;
 
-use async_trait::async_trait;
-use slive_core::error::SliveError;
-use slive_core::models::{LivePlayQuality, LivePlayUrl, LiveRoomDetail};
-use slive_core::platforms::bilibili::BilibiliSite;
-use slive_core::platforms::douyin::DouyinSite;
-use slive_core::platforms::douyu::DouyuSite;
-use slive_core::platforms::huya::HuyaSite;
-use slive_core::platforms::twitch::TwitchSite;
+use slive_core::models::{LivePlayQuality, LiveRoomDetail};
+use slive_core::platforms::LiveSite;
 
 use url::{Platform, Target};
 
@@ -47,6 +40,9 @@ slive —— Simple Live 命令行工具
 
 #[tokio::main]
 async fn main() {
+    // core 用 log:: 输出诊断但不自行安装 logger；CLI 是宿主，必须装一次，
+    // 否则弹幕会话里的连接/重连/帧错误全部静默丢失。
+    slive_host::logging::ensure_stderr_logger();
     let argv: Vec<String> = std::env::args().skip(1).collect();
     if let Err(message) = dispatch(&argv).await {
         eprintln!("错误：{message}");
@@ -80,11 +76,7 @@ async fn dispatch(argv: &[String]) -> Result<(), String> {
         match argv[index].as_str() {
             "-q" | "--quality" => {
                 index += 1;
-                quality = Some(
-                    argv.get(index)
-                        .ok_or("`--quality` 缺少参数")?
-                        .to_string(),
-                );
+                quality = Some(argv.get(index).ok_or("`--quality` 缺少参数")?.to_string());
             }
             "--all" => all = true,
             "--no-color" => color = false,
@@ -108,7 +100,7 @@ async fn dispatch(argv: &[String]) -> Result<(), String> {
         _ => {
             let site = build_site(target.platform);
             let detail = site
-                .detail(target.room.clone())
+                .get_room_detail(target.room.clone())
                 .await
                 .map_err(|e| e.to_string())?;
             print_detail(&site, &detail);
@@ -124,7 +116,7 @@ async fn dispatch(argv: &[String]) -> Result<(), String> {
 async fn info(target: &Target, quality: Option<&str>, all: bool) -> Result<(), String> {
     let site = build_site(target.platform);
     let detail = site
-        .detail(target.room.clone())
+        .get_room_detail(target.room.clone())
         .await
         .map_err(|e| e.to_string())?;
     print_detail(&site, &detail);
@@ -135,7 +127,7 @@ async fn info(target: &Target, quality: Option<&str>, all: bool) -> Result<(), S
     }
 
     let qualities = site
-        .qualities(detail.clone())
+        .get_play_qualities(detail.clone())
         .await
         .map_err(|e| e.to_string())?;
     if qualities.is_empty() {
@@ -151,11 +143,7 @@ async fn info(target: &Target, quality: Option<&str>, all: bool) -> Result<(), S
     let picked: Vec<LivePlayQuality> = if all {
         qualities.clone()
     } else if let Some(want) = quality {
-        let exact: Vec<LivePlayQuality> = qualities
-            .iter()
-            .filter(|item| item.quality == want)
-            .cloned()
-            .collect();
+        let exact: Vec<LivePlayQuality> = qualities.iter().filter(|item| item.quality == want).cloned().collect();
         if !exact.is_empty() {
             exact
         } else {
@@ -175,7 +163,7 @@ async fn info(target: &Target, quality: Option<&str>, all: bool) -> Result<(), S
 
     for item in picked {
         let play = site
-            .urls(detail.clone(), item.clone())
+            .get_play_urls(detail.clone(), item.clone())
             .await
             .map_err(|e| e.to_string())?;
         println!("\n直链（{}）：", item.quality);
@@ -191,8 +179,8 @@ async fn info(target: &Target, quality: Option<&str>, all: bool) -> Result<(), S
     Ok(())
 }
 
-fn print_detail(site: &Box<dyn SiteApi>, detail: &LiveRoomDetail) {
-    println!("来源：{}", site.display_name());
+fn print_detail(site: &Box<dyn LiveSite>, detail: &LiveRoomDetail) {
+    println!("来源：{}", site.name());
     println!("房间号：{}", detail.room_id);
     println!("房间标题：{}", detail.title);
     println!("直播用户：{}", detail.user_name);
@@ -213,64 +201,17 @@ fn print_headers(headers: &Option<HashMap<String, String>>) {
     }
 }
 
-fn build_site(platform: Platform) -> Box<dyn SiteApi> {
-    match platform {
-        Platform::Bilibili => Box::new(BilibiliSite::new()),
-        Platform::Douyu => Box::new(DouyuSite::new()),
-        Platform::Huya => Box::new(HuyaSite::new()),
-        Platform::Douyin => Box::new(DouyinSite::new()),
-        Platform::Twitch => Box::new(TwitchSite::new()),
+fn build_site(platform: Platform) -> Box<dyn LiveSite> {
+    slive_core::platforms::create_site(to_core_platform(platform))
+}
+
+/// CLI 的 `Platform`（URL 主机名解析专用）→ core 的 `Platform`（C ABI 稳定判别值）。
+fn to_core_platform(p: Platform) -> slive_core::platforms::Platform {
+    match p {
+        Platform::Bilibili => slive_core::platforms::Platform::Bilibili,
+        Platform::Douyu => slive_core::platforms::Platform::Douyu,
+        Platform::Huya => slive_core::platforms::Platform::Huya,
+        Platform::Douyin => slive_core::platforms::Platform::Douyin,
+        Platform::Twitch => slive_core::platforms::Platform::Twitch,
     }
 }
-
-/// 五平台站点方法的统一视图。
-///
-/// 五个 `*Site` 的 `get_room_detail` / `get_play_qualities` / `get_play_urls`
-/// 签名同构（owned 参数、同一组模型），故此处只做转发，不加任何逻辑。
-#[async_trait]
-trait SiteApi: Send + Sync {
-    fn display_name(&self) -> String;
-    async fn detail(&self, room_id: String) -> Result<LiveRoomDetail, SliveError>;
-    async fn qualities(&self, detail: LiveRoomDetail) -> Result<Vec<LivePlayQuality>, SliveError>;
-    async fn urls(
-        &self,
-        detail: LiveRoomDetail,
-        quality: LivePlayQuality,
-    ) -> Result<LivePlayUrl, SliveError>;
-}
-
-macro_rules! impl_site_api {
-    ($site:ty) => {
-        #[async_trait]
-        impl SiteApi for $site {
-            fn display_name(&self) -> String {
-                <$site>::name(self)
-            }
-
-            async fn detail(&self, room_id: String) -> Result<LiveRoomDetail, SliveError> {
-                <$site>::get_room_detail(self, room_id).await
-            }
-
-            async fn qualities(
-                &self,
-                detail: LiveRoomDetail,
-            ) -> Result<Vec<LivePlayQuality>, SliveError> {
-                <$site>::get_play_qualities(self, detail).await
-            }
-
-            async fn urls(
-                &self,
-                detail: LiveRoomDetail,
-                quality: LivePlayQuality,
-            ) -> Result<LivePlayUrl, SliveError> {
-                <$site>::get_play_urls(self, detail, quality).await
-            }
-        }
-    };
-}
-
-impl_site_api!(BilibiliSite);
-impl_site_api!(DouyuSite);
-impl_site_api!(HuyaSite);
-impl_site_api!(DouyinSite);
-impl_site_api!(TwitchSite);

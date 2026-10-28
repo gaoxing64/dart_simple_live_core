@@ -72,9 +72,7 @@ pub fn parse(raw: &str) -> Result<Target, String> {
         }
     }
 
-    Err(format!(
-        "暂不支持该站点：{url}（支持 B站/斗鱼/虎牙/抖音/Twitch）"
-    ))
+    Err(format!("暂不支持该站点：{url}（支持 B站/斗鱼/虎牙/抖音/Twitch）"))
 }
 
 /// 取 `marker` 之后的第一个路径段，剥掉 query / fragment / 尾斜杠。
@@ -82,12 +80,7 @@ fn segment_after(url: &str, marker: &str) -> Option<String> {
     let idx = url.find(marker)? + marker.len();
     let rest = &url[idx..];
     let rest = rest.split(['?', '#']).next().unwrap_or("");
-    let seg = rest
-        .trim_start_matches('/')
-        .split('/')
-        .next()
-        .unwrap_or("")
-        .trim();
+    let seg = rest.trim_start_matches('/').split('/').next().unwrap_or("").trim();
     if seg.is_empty() {
         None
     } else {

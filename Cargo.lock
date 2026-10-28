@@ -1444,16 +1444,12 @@ dependencies = [
 name = "rust_lib_simple_live_app"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "chrono",
  "flutter_rust_bridge",
- "futures-util",
  "lazy_static",
- "regex",
  "slive-core",
+ "slive-host",
  "tokio",
- "tokio-tungstenite",
- "xxhash-rust",
 ]
 
 [[package]]
@@ -1665,11 +1661,9 @@ dependencies = [
 name = "slive-cli"
 version = "0.1.0"
 dependencies = [
- "async-trait",
- "futures-util",
  "slive-core",
+ "slive-host",
  "tokio",
- "tokio-tungstenite",
 ]
 
 [[package]]
@@ -1692,6 +1686,32 @@ dependencies = [
  "serde_json",
  "thiserror",
  "tokio",
+ "xxhash-rust",
+]
+
+[[package]]
+name = "slive-ffi"
+version = "0.1.0"
+dependencies = [
+ "futures-util",
+ "log",
+ "serde",
+ "serde_json",
+ "slive-core",
+ "slive-host",
+ "tokio",
+]
+
+[[package]]
+name = "slive-host"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "futures-util",
+ "log",
+ "slive-core",
+ "tokio",
+ "tokio-tungstenite",
 ]
 
 [[package]]

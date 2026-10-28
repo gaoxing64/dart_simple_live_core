@@ -7,7 +7,7 @@
 //! - [`connect_binary`]：二进制帧（B站/虎牙/抖音），Text 帧忽略；
 //! - [`connect_text`]：IRC 文本帧（Twitch），Binary 帧也照收。
 //!
-//! 斗鱼弹幕不走 WS：见 `slive_core::ws::tcp`（ADR-015）。
+//! 斗鱼弹幕不走 WS：见 `crate::tcp`（ADR-015）。
 
 use async_trait::async_trait;
 use futures_util::{SinkExt, StreamExt};
@@ -43,19 +43,23 @@ async fn connect(url: String, headers: Vec<(String, String)>) -> Result<WsStream
     Ok(stream)
 }
 
-async fn connect_binary(
-    url: String,
-    headers: Vec<(String, String)>,
-) -> Result<Box<dyn FrameSource>, SliveError> {
+async fn connect_binary(url: String, headers: Vec<(String, String)>) -> Result<Box<dyn FrameSource>, SliveError> {
     Ok(Box::new(BinaryFrames {
         stream: connect(url, headers).await?,
     }))
 }
 
-async fn connect_text(
+/// 连接装配（URL/headers 来自核心契约）。
+///
+/// 桥层以 `pub use` 重导出此函数（`tests/manual_e2e.rs` 依赖该路径）。
+pub async fn connect_ws_frame_source(
     url: String,
     headers: Vec<(String, String)>,
 ) -> Result<Box<dyn FrameSource>, SliveError> {
+    connect_binary(url, headers).await
+}
+
+async fn connect_text(url: String, headers: Vec<(String, String)>) -> Result<Box<dyn FrameSource>, SliveError> {
     Ok(Box::new(TextFrames {
         stream: connect(url, headers).await?,
     }))
@@ -109,8 +113,7 @@ impl FrameSource for TextFrames {
     }
 
     async fn send(&mut self, frame: Vec<u8>) -> Result<(), SliveError> {
-        let text = String::from_utf8(frame)
-            .map_err(|e| SliveError::Websocket(format!("IRC 帧非 UTF-8: {e}")))?;
+        let text = String::from_utf8(frame).map_err(|e| SliveError::Websocket(format!("IRC 帧非 UTF-8: {e}")))?;
         self.stream
             .send(Message::Text(text))
             .await
@@ -119,10 +122,7 @@ impl FrameSource for TextFrames {
 }
 
 /// 二进制帧连接工厂（供各平台 `ConnectFactory` 使用）。
-pub fn binary_factory(
-    url: String,
-    headers: Vec<(String, String)>,
-) -> slive_core::ws::ConnectFactory {
+pub fn binary_factory(url: String, headers: Vec<(String, String)>) -> slive_core::ws::ConnectFactory {
     Box::new(move || {
         let url = url.clone();
         let headers = headers.clone();
@@ -131,10 +131,7 @@ pub fn binary_factory(
 }
 
 /// 文本帧连接工厂（Twitch 专用）。
-pub fn text_factory(
-    url: String,
-    headers: Vec<(String, String)>,
-) -> slive_core::ws::ConnectFactory {
+pub fn text_factory(url: String, headers: Vec<(String, String)>) -> slive_core::ws::ConnectFactory {
     Box::new(move || {
         let url = url.clone();
         let headers = headers.clone();

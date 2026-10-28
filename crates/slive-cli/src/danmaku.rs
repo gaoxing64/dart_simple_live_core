@@ -5,22 +5,15 @@
 
 use std::sync::Arc;
 
-use slive_core::models::{
-    LiveDanmuControlEvent, LiveDanmuItem, LiveMessageData, LiveMessageType, LiveRoomDetail,
-};
+use slive_core::models::{LiveDanmuControlEvent, LiveDanmuItem, LiveMessageData, LiveMessageType, LiveRoomDetail};
 use slive_core::time::SystemClock;
 use slive_core::ws::SessionTuning;
 use tokio::sync::watch;
 
 use crate::url::{Platform, Target};
-use crate::ws;
 
 /// 启动弹幕会话并阻塞到会话结束（Ctrl-C 触发优雅停止）。
-pub async fn run(
-    target: &Target,
-    detail: &LiveRoomDetail,
-    color: bool,
-) -> Result<(), String> {
+pub async fn run(target: &Target, detail: &LiveRoomDetail, color: bool) -> Result<(), String> {
     let (stop_tx, stop_rx) = watch::channel(false);
 
     tokio::spawn(async move {
@@ -63,7 +56,7 @@ async fn run_bilibili(
 
     let json = danmaku_json(detail, "B站")?;
     let args = BiliBiliDanmakuArgs::from_json(json).map_err(|e| e.to_string())?;
-    let connect = ws::binary_factory(args.ws_url(), args.connect_headers());
+    let connect = slive_host::ws::binary_factory(args.ws_url(), args.connect_headers());
 
     slive_core::ws::run_session(
         args,
@@ -88,17 +81,9 @@ async fn run_douyu(
     // 斗鱼只需房间号即可建会话（与 Dart console 一致），不依赖 danmaku_data。
     // 传输为明文 TCP（ADR-015），不再走 WSS/TLS。
     let args = DouyuDanmakuArgs::new(&detail.room_id).map_err(|e| e.to_string())?;
-    let connect = slive_core::ws::tcp::factory(args.connect_url());
+    let connect = slive_host::tcp::factory(args.connect_url());
 
-    run_session(
-        args,
-        connect,
-        Arc::new(SystemClock),
-        douyu_tuning(),
-        stop_rx,
-        on_item,
-    )
-    .await;
+    run_session(args, connect, Arc::new(SystemClock), douyu_tuning(), stop_rx, on_item).await;
     Ok(())
 }
 
@@ -117,7 +102,7 @@ async fn run_huya(
         ("user-agent".to_string(), DEFAULT_USER_AGENT.to_string()),
         ("origin".to_string(), BASE_URL.to_string()),
     ];
-    let connect = ws::binary_factory(WS_SERVER_URL.to_string(), headers);
+    let connect = slive_host::ws::binary_factory(WS_SERVER_URL.to_string(), headers);
 
     // SC 增量拉取传 `None`：CLI 不消费醒目留言列表，弹幕主循环不受影响。
     run_session(
@@ -147,23 +132,16 @@ async fn run_douyin(
     let args = DouyinDanmakuArgs::from_json(json).map_err(|e| e.to_string())?;
 
     // 握手 URL 含 x_bogus 签名：签名失败属入参非法，必须在建连前报出来。
-    let signature = build_ws_signature(&args.room_id, &args.user_id, VERSION_CODE, SDK_VERSION)
-        .map_err(|e| e.to_string())?;
+    let signature =
+        build_ws_signature(&args.room_id, &args.user_id, VERSION_CODE, SDK_VERSION).map_err(|e| e.to_string())?;
     let ts_millis = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_millis() as u64)
         .unwrap_or_default();
     let url = args.ws_url(args.primary_host(), ts_millis, &signature);
-    let connect = ws::binary_factory(url, args.connect_headers());
+    let connect = slive_host::ws::binary_factory(url, args.connect_headers());
 
-    run_session(
-        args,
-        connect,
-        Arc::new(SystemClock),
-        stop_rx,
-        on_item,
-    )
-    .await;
+    run_session(args, connect, Arc::new(SystemClock), stop_rx, on_item).await;
     Ok(())
 }
 
@@ -177,17 +155,9 @@ async fn run_twitch(
 
     // Q-13：Twitch 的 danmaku_data 是频道名纯字符串，不是 JSON 契约。
     let args = TwitchDanmakuArgs::new(&detail.room_id);
-    let connect = ws::text_factory(args.ws_url(), args.connect_headers());
+    let connect = slive_host::ws::text_factory(args.ws_url(), args.connect_headers());
 
-    run_session(
-        args,
-        connect,
-        Arc::new(SystemClock),
-        tuning(),
-        stop_rx,
-        on_item,
-    )
-    .await;
+    run_session(args, connect, Arc::new(SystemClock), tuning(), stop_rx, on_item).await;
     Ok(())
 }
 
@@ -230,8 +200,5 @@ fn paint(text: &str, color: slive_core::models::LiveMessageColor, enabled: bool)
     if !enabled {
         return text.to_string();
     }
-    format!(
-        "\x1b[38;2;{};{};{}m{text}\x1b[0m",
-        color.r, color.g, color.b
-    )
+    format!("\x1b[38;2;{};{};{}m{text}\x1b[0m", color.r, color.g, color.b)
 }
