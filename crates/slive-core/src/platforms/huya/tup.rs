@@ -106,9 +106,10 @@ impl PostBytesTransport for ReqwestPostTransport {
     async fn post_bytes(&self, request: &PostBytesRequest) -> Result<HttpReply, SliveError> {
         let mut builder = self
             .client
-            .post(reqwest::Url::parse(&request.url).map_err(|e| {
-                SliveError::invalid_input(format!("非法 URL({}): {e}", request.url))
-            })?)
+            .post(
+                reqwest::Url::parse(&request.url)
+                    .map_err(|e| SliveError::invalid_input(format!("非法 URL({}): {e}", request.url)))?,
+            )
             .body(request.body.clone())
             // TUP 是二进制协议，必须显式覆盖 reqwest 对 Vec<u8> 的默认 JSON 推断
             .header(reqwest::header::CONTENT_TYPE, TUP_CONTENT_TYPE);
@@ -116,10 +117,7 @@ impl PostBytesTransport for ReqwestPostTransport {
             builder = builder.header(key.as_str(), value.as_str());
         }
 
-        let response = builder
-            .send()
-            .await
-            .map_err(|e| SliveError::network(e.to_string()))?;
+        let response = builder.send().await.map_err(|e| SliveError::network(e.to_string()))?;
         let status = response.status().as_u16();
         let bytes = response
             .bytes()
@@ -146,12 +144,7 @@ pub fn reply_bytes(reply: &HttpReply) -> Vec<u8> {
 }
 
 /// 发起一次 TUP 请求并解码 `tRsp`（`code != 0` -> `SliveError::Api`）。
-async fn tup_call<R>(
-    site: &HuyaSite,
-    servant: &str,
-    func: &str,
-    req: &impl TarsStruct,
-) -> Result<R, SliveError>
+async fn tup_call<R>(site: &HuyaSite, servant: &str, func: &str, req: &impl TarsStruct) -> Result<R, SliveError>
 where
     R: TarsStruct,
 {
@@ -186,14 +179,8 @@ where
 }
 
 /// F-08 取流 token（`liveui/getCdnTokenInfoEx`）。
-pub(crate) async fn fetch_cdn_token(
-    site: &HuyaSite,
-    stream_name: &str,
-) -> Result<String, SliveError> {
-    let req = GetCdnTokenExReq::new(
-        stream_name.to_string(),
-        anon_user_id(&super::common::random_huya_ua()),
-    );
+pub(crate) async fn fetch_cdn_token(site: &HuyaSite, stream_name: &str) -> Result<String, SliveError> {
+    let req = GetCdnTokenExReq::new(stream_name.to_string(), anon_user_id(&super::common::random_huya_ua()));
     let resp: GetCdnTokenExResp = tup_call(site, SERVANT_LIVE_UI, FUNC_CDN_TOKEN_EX, &req).await?;
     if resp.s_flv_token.is_empty() {
         return Err(SliveError::decode(format!(
@@ -204,21 +191,9 @@ pub(crate) async fn fetch_cdn_token(
 }
 
 /// F-10 醒目留言原始条目（`wupui/getHeadLineMessageBoard`）。
-pub(crate) async fn fetch_message_board(
-    site: &HuyaSite,
-    pid: i64,
-) -> Result<GetGameEventMessageBoardRsp, SliveError> {
-    let req = GetGameEventMessageBoardReq::new(
-        pid,
-        anon_user_id(super::common::DEFAULT_HYSDK_UA),
-    );
-    tup_call(
-        site,
-        SERVANT_WUP_UI,
-        FUNC_HEADLINE_BOARD,
-        &req,
-    )
-    .await
+pub(crate) async fn fetch_message_board(site: &HuyaSite, pid: i64) -> Result<GetGameEventMessageBoardRsp, SliveError> {
+    let req = GetGameEventMessageBoardReq::new(pid, anon_user_id(super::common::DEFAULT_HYSDK_UA));
+    tup_call(site, SERVANT_WUP_UI, FUNC_HEADLINE_BOARD, &req).await
 }
 
 /// 拉取表情包（`wupui/getExpressionEmoticonPackage`）。
@@ -229,17 +204,8 @@ pub async fn fetch_expression_packages(
     site: &HuyaSite,
     top_sid: i64,
 ) -> Result<Vec<ExpressionEmoticonPackage>, SliveError> {
-    let req = GetExpressionEmoticonPackageReq::new(
-        anon_user_id("webh5&1.0.0&huya"),
-        top_sid,
-    );
-    let rsp: GetExpressionEmoticonPackageRsp = tup_call(
-        site,
-        SERVANT_WUP_UI,
-        FUNC_EXPRESSION_PACKAGES,
-        &req,
-    )
-    .await?;
+    let req = GetExpressionEmoticonPackageReq::new(anon_user_id("webh5&1.0.0&huya"), top_sid);
+    let rsp: GetExpressionEmoticonPackageRsp = tup_call(site, SERVANT_WUP_UI, FUNC_EXPRESSION_PACKAGES, &req).await?;
     Ok(rsp.v_package)
 }
 
@@ -251,21 +217,16 @@ pub async fn fetch_emoticon_table(site: &HuyaSite, top_sid: i64) -> HuyaEmoticon
 }
 
 /// 同 [`fetch_emoticon_table`]，超时可注入（测试用）。
-pub async fn fetch_emoticon_table_with_timeout(
-    site: &HuyaSite,
-    top_sid: i64,
-    timeout: Duration,
-) -> HuyaEmoticonTable {
-    let fetched =
-        tokio::time::timeout(timeout, fetch_expression_packages(site, top_sid)).await;
+pub async fn fetch_emoticon_table_with_timeout(site: &HuyaSite, top_sid: i64, timeout: Duration) -> HuyaEmoticonTable {
+    let fetched = tokio::time::timeout(timeout, fetch_expression_packages(site, top_sid)).await;
     match fetched {
         Ok(Ok(packages)) => build_table(&packages),
         Ok(Err(e)) => {
-            eprintln!("[huya-emoticon] 拉取表情包失败: {e}");
+            log::warn!("[huya-emoticon] 拉取表情包失败: {e}");
             super::danmaku::emoticon::static_table()
         }
         Err(_) => {
-            eprintln!("[huya-emoticon] 拉取表情包超时，使用静态表");
+            log::warn!("[huya-emoticon] 拉取表情包超时，使用静态表");
             super::danmaku::emoticon::static_table()
         }
     }

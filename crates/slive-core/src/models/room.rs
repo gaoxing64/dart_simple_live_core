@@ -1,7 +1,7 @@
 //! 房间列表项 / 主播项 / 房间详情（对照 Dart `live_room_item.dart` / `live_anchor_item.dart` / `live_room_detail.dart`）。
 
 /// 直播房间列表项。
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct LiveRoomItem {
     /// 房间 ID。
     pub room_id: String,
@@ -16,7 +16,7 @@ pub struct LiveRoomItem {
 }
 
 /// 主播搜索项。
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct LiveAnchorItem {
     /// 房间 ID。
     pub room_id: String,
@@ -29,7 +29,7 @@ pub struct LiveAnchorItem {
 }
 
 /// 房间详情。
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct LiveRoomDetail {
     /// 真实房间 ID。
     pub room_id: String,

@@ -11,6 +11,7 @@
 //!   wbi 的 `wts` 与 ws 心跳均从注入的时间源取
 //! - [`ws::FrameSource`]：WS 帧事件源抽象（测试 [`testing::ScriptedFrameSource`]），供 IP-2 弹幕链路注入
 
+pub mod danmaku;
 pub mod error;
 pub mod http;
 pub mod logging;

@@ -3,7 +3,7 @@
 use crate::models::{LiveAnchorItem, LiveRoomItem};
 
 /// 分类下房间 / 推荐结果。
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct LiveCategoryResult {
     /// 是否还有下一页。
     pub has_more: bool,
@@ -12,7 +12,7 @@ pub struct LiveCategoryResult {
 }
 
 /// 房间搜索结果。
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct LiveSearchRoomResult {
     /// 是否还有下一页（`items.len() >= 40`）。
     pub has_more: bool,
@@ -21,7 +21,7 @@ pub struct LiveSearchRoomResult {
 }
 
 /// 主播搜索结果。
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct LiveSearchAnchorResult {
     /// 是否还有下一页（`items.len() >= 40`）。
     pub has_more: bool,

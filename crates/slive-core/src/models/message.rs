@@ -6,7 +6,8 @@
 use chrono::{DateTime, Local};
 
 /// 消息类型。
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum LiveMessageType {
     /// 聊天弹幕。
     Chat,
@@ -19,7 +20,7 @@ pub enum LiveMessageType {
 }
 
 /// 弹幕颜色（RGB）。
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct LiveMessageColor {
     /// 红。
     pub r: i32,
@@ -63,7 +64,7 @@ fn parse_hex(s: &str) -> i32 {
 }
 
 /// 弹幕表情包。
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct LiveMessageEmoticon {
     /// 占位符文本（`None` 表示渲染层追加到消息末尾）。
     pub name: Option<String>,
@@ -80,7 +81,7 @@ pub struct LiveMessageEmoticon {
 }
 
 /// 醒目留言。
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct LiveSuperChatMessage {
     /// 用户名。
     pub user_name: String,
@@ -101,7 +102,8 @@ pub struct LiveSuperChatMessage {
 }
 
 /// 消息附带数据（类型化枚举，替代 Dart `dynamic`）。
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "type", content = "data", rename_all = "snake_case")]
 pub enum LiveMessageData {
     /// 人气值（op=3）。
     Online(i32),
@@ -110,7 +112,7 @@ pub enum LiveMessageData {
 }
 
 /// 弹幕消息。
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct LiveMessage {
     /// 消息类型。
     pub message_type: LiveMessageType,
@@ -135,8 +137,14 @@ mod tests {
     #[test]
     fn number_to_color_matches_dart() {
         assert_eq!(LiveMessageColor::number_to_color(16777215), LiveMessageColor::white());
-        assert_eq!(LiveMessageColor::number_to_color(0xFF0000), LiveMessageColor::new(255, 0, 0));
+        assert_eq!(
+            LiveMessageColor::number_to_color(0xFF0000),
+            LiveMessageColor::new(255, 0, 0)
+        );
         // 4 位形态补 00 前缀
-        assert_eq!(LiveMessageColor::number_to_color(0x1234), LiveMessageColor::new(0x00, 0x12, 0x34));
+        assert_eq!(
+            LiveMessageColor::number_to_color(0x1234),
+            LiveMessageColor::new(0x00, 0x12, 0x34)
+        );
     }
 }

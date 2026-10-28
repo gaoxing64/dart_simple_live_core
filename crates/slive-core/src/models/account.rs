@@ -1,7 +1,8 @@
 //! 账号模型（对照 Dart `account_info.dart` / `account_qr_code.dart` / `common/qr_status.dart`）。
 
 /// 二维码登录状态（对照 Dart `QRStatus`）。
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum QrStatus {
     /// 加载中。
     Loading,
@@ -16,7 +17,7 @@ pub enum QrStatus {
 }
 
 /// 登录二维码（对照 Dart `QRCode`）。
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct QrCode {
     /// 二维码 key。
     pub key: String,
@@ -29,7 +30,7 @@ pub struct QrCode {
 }
 
 /// 扫码轮询结果（对照 Dart `QRPollResult`）。
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct QrPollResult {
     /// 状态。
     pub status: QrStatus,
@@ -40,7 +41,7 @@ pub struct QrPollResult {
 }
 
 /// 账号信息（对照 Dart `AccountInfo`）。
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct AccountInfo {
     /// 昵称。
     pub name: Option<String>,

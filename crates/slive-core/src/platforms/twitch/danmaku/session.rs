@@ -68,7 +68,7 @@ pub async fn run_session(
         let mut source = match (connect)().await {
             Ok(s) => s,
             Err(e) => {
-                eprintln!("[twitch-danmaku] connect failed: {e}");
+                log::warn!("[twitch-danmaku] connect failed: {e}");
                 if reconnect_or_close(&mut attempt, &tuning, time.as_ref(), &mut on_item).await {
                     return;
                 }
@@ -107,8 +107,8 @@ pub async fn run_session(
             };
             let Some(Ok(frame)) = frame else {
                 match &frame {
-                    Some(Err(e)) => eprintln!("[twitch-danmaku] frame error: {e}"),
-                    _ => eprintln!("[twitch-danmaku] connection closed by server"),
+                    Some(Err(e)) => log::warn!("[twitch-danmaku] frame error: {e}"),
+                    _ => log::warn!("[twitch-danmaku] connection closed by server"),
                 }
                 if reconnect_or_close(&mut attempt, &tuning, time.as_ref(), &mut on_item).await {
                     return;
@@ -164,11 +164,8 @@ async fn reconnect_or_close(
 }
 
 /// 便于外部（桥层）构造连接工厂的类型别名（语义与 `ws::ConnectFactory` 相同）。
-pub type TwitchConnectFactory = Box<
-    dyn FnMut()
-        -> Pin<Box<dyn Future<Output = Result<Box<dyn FrameSource>, SliveError>> + Send>>
-        + Send,
->;
+pub type TwitchConnectFactory =
+    Box<dyn FnMut() -> Pin<Box<dyn Future<Output = Result<Box<dyn FrameSource>, SliveError>> + Send>> + Send>;
 
 #[cfg(test)]
 #[path = "session_tests.rs"]

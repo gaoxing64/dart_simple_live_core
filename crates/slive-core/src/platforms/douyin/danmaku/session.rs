@@ -22,11 +22,8 @@ use super::args::DouyinDanmakuArgs;
 use super::decode::{ack_frame, decode_frame, heartbeat_frame, pending_ack};
 
 /// 连接工厂：每次（重）连创建新的帧事件源。
-pub type ConnectFactory = Box<
-    dyn FnMut()
-        -> Pin<Box<dyn Future<Output = Result<Box<dyn FrameSource>, SliveError>> + Send>>
-        + Send,
->;
+pub type ConnectFactory =
+    Box<dyn FnMut() -> Pin<Box<dyn Future<Output = Result<Box<dyn FrameSource>, SliveError>> + Send>> + Send>;
 
 /// 抖音默认调参（心跳 10s / 重连间隔 5s / 最多 5 次）。
 pub const DOUYIN_TUNING: SessionTuning = SessionTuning {
@@ -66,7 +63,7 @@ pub async fn run_session(
         let mut source = match (connect)().await {
             Ok(s) => s,
             Err(e) => {
-                eprintln!("[douyin-danmaku] connect failed: {e}");
+                log::warn!("[douyin-danmaku] connect failed: {e}");
                 if reconnect_or_close(&mut attempt, time.as_ref(), &mut on_item).await {
                     return;
                 }
@@ -100,8 +97,8 @@ pub async fn run_session(
             };
             let Some(Ok(frame)) = frame else {
                 match &frame {
-                    Some(Err(e)) => eprintln!("[douyin-danmaku] frame error: {e}"),
-                    _ => eprintln!("[douyin-danmaku] connection closed by server"),
+                    Some(Err(e)) => log::warn!("[douyin-danmaku] frame error: {e}"),
+                    _ => log::warn!("[douyin-danmaku] connection closed by server"),
                 }
                 if reconnect_or_close(&mut attempt, time.as_ref(), &mut on_item).await {
                     return;
@@ -110,8 +107,7 @@ pub async fn run_session(
             };
             // 收到消息 → 重连计数归零（Dart receiveMessage）
             attempt = 0;
-            let heartbeat_due =
-                time.unix_secs() >= last_heartbeat + DOUYIN_TUNING.heartbeat_secs;
+            let heartbeat_due = time.unix_secs() >= last_heartbeat + DOUYIN_TUNING.heartbeat_secs;
             if heartbeat_due && source.send(heartbeat_frame()).await.is_ok() {
                 last_heartbeat = time.unix_secs();
             }
@@ -119,11 +115,11 @@ pub async fn run_session(
             match pending_ack(&frame) {
                 Ok(Some((log_id, internal_ext))) => {
                     if let Err(e) = source.send(ack_frame(log_id, &internal_ext)).await {
-                        eprintln!("[douyin-danmaku] ack 发送失败: {e}");
+                        log::warn!("[douyin-danmaku] ack 发送失败: {e}");
                     }
                 }
                 Ok(None) => {}
-                Err(e) => eprintln!("[douyin-danmaku] ack 解析失败: {e}"),
+                Err(e) => log::warn!("[douyin-danmaku] ack 解析失败: {e}"),
             }
             // 解码分发：脏帧在此被吞掉（Dart 亦以 try/catch 记日志后继续）
             match decode_frame(&frame) {
@@ -132,7 +128,7 @@ pub async fn run_session(
                         on_item(LiveDanmuItem::Message(Box::new(message)));
                     }
                 }
-                Err(e) => eprintln!("[douyin-danmaku] 帧解码失败: {e}"),
+                Err(e) => log::warn!("[douyin-danmaku] 帧解码失败: {e}"),
             }
         }
     }
@@ -211,10 +207,7 @@ mod tests {
         )
     }
 
-    fn collector() -> (
-        Arc<StdMutex<Vec<LiveDanmuItem>>>,
-        impl FnMut(LiveDanmuItem) + Send,
-    ) {
+    fn collector() -> (Arc<StdMutex<Vec<LiveDanmuItem>>>, impl FnMut(LiveDanmuItem) + Send) {
         let items: Arc<StdMutex<Vec<LiveDanmuItem>>> = Arc::new(StdMutex::new(Vec::new()));
         let sink = Arc::clone(&items);
         (items, move |item| sink.lock().expect("sink").push(item))
@@ -231,9 +224,7 @@ mod tests {
     #[tokio::test]
     async fn ready_then_chat_message_then_reconnect_five_times() {
         let mut queue: VecDeque<Box<dyn FrameSource>> = VecDeque::new();
-        queue.push_back(Box::new(ScriptedFrameSource::new(vec![chat_frame(
-            "你好", "小明",
-        )])));
+        queue.push_back(Box::new(ScriptedFrameSource::new(vec![chat_frame("你好", "小明")])));
         let connect: ConnectFactory = Box::new(move || {
             let next = queue.pop_front();
             Box::pin(async move { next.ok_or_else(|| SliveError::network("无更多连接")) })
@@ -253,12 +244,7 @@ mod tests {
         );
         let reconnects = got
             .iter()
-            .filter(|i| {
-                matches!(
-                    i,
-                    LiveDanmuItem::Control(LiveDanmuControlEvent::Reconnecting { .. })
-                )
-            })
+            .filter(|i| matches!(i, LiveDanmuItem::Control(LiveDanmuControlEvent::Reconnecting { .. })))
             .count();
         assert_eq!(reconnects, 5, "最多 5 次重连（5s×5）");
         assert!(matches!(

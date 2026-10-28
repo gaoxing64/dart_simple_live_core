@@ -1,7 +1,7 @@
 //! 分类模型（对照 Dart `live_category.dart`）。
 
 /// 一级分类（A 列表项）。
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct LiveCategory {
     /// 分类名。
     pub name: String,
@@ -12,7 +12,7 @@ pub struct LiveCategory {
 }
 
 /// 二级分类。
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct LiveSubCategory {
     /// 分类名。
     pub name: String,

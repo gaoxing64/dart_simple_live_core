@@ -21,27 +21,25 @@ pub mod super_chat_map;
 pub mod tars_cdn;
 pub mod tars_emoticon;
 pub mod tars_msgs;
-pub mod tars_ws_v2;
 pub mod tars_sc;
+pub mod tars_ws_v2;
 
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 
 use crate::error::SliveError;
-use crate::models::{LiveDanmuControlEvent, LiveDanmuItem, LiveMessage, LiveMessageColor, LiveMessageData, LiveMessageType};
+use crate::models::{
+    LiveDanmuControlEvent, LiveDanmuItem, LiveMessage, LiveMessageColor, LiveMessageData, LiveMessageType,
+};
 use crate::time::TimeSource;
 use crate::ws::{FrameSource, SessionTuning};
 
 pub use args::{HuyaDanmakuArgs, DEFAULT_DEVICE, DEFAULT_GUID, HUYA_DANMAKU_ARGS_SCHEMA_VERSION};
 
-
 /// 连接工厂：每次（重）连创建新的帧事件源（与 B站 runner 同签名形态）。
-pub type ConnectFactory = Box<
-    dyn FnMut()
-        -> Pin<Box<dyn Future<Output = Result<Box<dyn FrameSource>, SliveError>> + Send>>
-        + Send,
->;
+pub type ConnectFactory =
+    Box<dyn FnMut() -> Pin<Box<dyn Future<Output = Result<Box<dyn FrameSource>, SliveError>> + Send>> + Send>;
 
 /// 醒目留言事件的拉取钩子（异步）。
 ///
@@ -53,11 +51,8 @@ pub type ConnectFactory = Box<
 /// **必须是异步钩子**：会话循环本身运行在 tokio runtime 内，若钩子在内部再
 /// `block_on` 一个 runtime 会 panic（"Cannot start a runtime from within a runtime"），
 /// 整个弹幕线程会静默退出（真机 2026-10-18 虎牙弹幕停更事故）。
-pub type SuperChatFetcher = Arc<
-    dyn Fn(i64) -> Pin<Box<dyn Future<Output = Vec<crate::models::LiveSuperChatMessage>> + Send>>
-        + Send
-        + Sync,
->;
+pub type SuperChatFetcher =
+    Arc<dyn Fn(i64) -> Pin<Box<dyn Future<Output = Vec<crate::models::LiveSuperChatMessage>> + Send>> + Send + Sync>;
 
 /// 会话主循环。`on_item` 依次收到 `Ready` / `Message` / `Reconnecting` / `Closed`。
 ///
@@ -104,20 +99,20 @@ pub async fn run_session_with_emoticons(
     let join_frame = match frames::build_join_frame(&args.group_ids()) {
         Ok(frame) => frame,
         Err(e) => {
-            eprintln!("[huya-danmaku] join 帧构造失败: {e}");
-            on_item(LiveDanmuItem::Control(LiveDanmuControlEvent::Closed(
-                format!("join 帧构造失败: {e}"),
-            )));
+            log::warn!("[huya-danmaku] join 帧构造失败: {e}");
+            on_item(LiveDanmuItem::Control(LiveDanmuControlEvent::Closed(format!(
+                "join 帧构造失败: {e}"
+            ))));
             return;
         }
     };
     let heartbeat_frame = match frames::build_heartbeat_frame() {
         Ok(frame) => frame,
         Err(e) => {
-            eprintln!("[huya-danmaku] 心跳帧构造失败: {e}");
-            on_item(LiveDanmuItem::Control(LiveDanmuControlEvent::Closed(
-                format!("心跳帧构造失败: {e}"),
-            )));
+            log::warn!("[huya-danmaku] 心跳帧构造失败: {e}");
+            on_item(LiveDanmuItem::Control(LiveDanmuControlEvent::Closed(format!(
+                "心跳帧构造失败: {e}"
+            ))));
             return;
         }
     };
@@ -133,7 +128,7 @@ pub async fn run_session_with_emoticons(
         let mut source = match (connect)().await {
             Ok(s) => s,
             Err(e) => {
-                eprintln!("[huya-danmaku] 连接失败: {e}");
+                log::warn!("[huya-danmaku] 连接失败: {e}");
                 if reconnect_or_close(&mut attempt, &tuning, time.as_ref(), &mut on_item).await {
                     return;
                 }
@@ -142,7 +137,7 @@ pub async fn run_session_with_emoticons(
         };
         on_item(LiveDanmuItem::Control(LiveDanmuControlEvent::Ready));
         if let Err(e) = source.send(join_frame.clone()).await {
-            eprintln!("[huya-danmaku] join 发送失败: {e}");
+            log::warn!("[huya-danmaku] join 发送失败: {e}");
             if reconnect_or_close(&mut attempt, &tuning, time.as_ref(), &mut on_item).await {
                 return;
             }
@@ -172,8 +167,8 @@ pub async fn run_session_with_emoticons(
             };
             let Some(Ok(frame)) = frame else {
                 match &frame {
-                    Some(Err(e)) => eprintln!("[huya-danmaku] 帧错误: {e}"),
-                    _ => eprintln!("[huya-danmaku] 服务端关闭连接"),
+                    Some(Err(e)) => log::warn!("[huya-danmaku] 帧错误: {e}"),
+                    _ => log::warn!("[huya-danmaku] 服务端关闭连接"),
                 }
                 if reconnect_or_close(&mut attempt, &tuning, time.as_ref(), &mut on_item).await {
                     return;
@@ -192,8 +187,7 @@ pub async fn run_session_with_emoticons(
                 on_item(item);
             }
             if decoded.super_chat_triggered {
-                let items =
-                    super_chat_map::super_chat_items(args.top_sid, fetch_super_chat.as_ref()).await;
+                let items = super_chat_map::super_chat_items(args.top_sid, fetch_super_chat.as_ref()).await;
                 for item in items {
                     on_item(item);
                 }
@@ -245,26 +239,16 @@ pub struct DecodedFrame {
 ///
 /// `_args` / `_top_sid` 只为保留既有调用签名；表情表改由
 /// [`decode_to_items_with_emoticons`] 注入。
-pub fn decode_to_items(
-    frame: &[u8],
-    _args: &HuyaDanmakuArgs,
-    _top_sid: i64,
-) -> DecodedFrame {
+pub fn decode_to_items(frame: &[u8], _args: &HuyaDanmakuArgs, _top_sid: i64) -> DecodedFrame {
     decode_to_items_with_emoticons(frame, emoticon::static_emoticons())
 }
 
 /// 同 [`decode_to_items`]，但使用会话注入的动态表情表（房间大表情）。
-pub fn decode_to_items_with_emoticons(
-    frame: &[u8],
-    emoticons: &emoticon::HuyaEmoticonTable,
-) -> DecodedFrame {
+pub fn decode_to_items_with_emoticons(frame: &[u8], emoticons: &emoticon::HuyaEmoticonTable) -> DecodedFrame {
     map_frame(frames::decode_frame(frame), emoticons)
 }
 
-fn map_frame(
-    decoded: frames::HuyaFrame,
-    emoticons: &emoticon::HuyaEmoticonTable,
-) -> DecodedFrame {
+fn map_frame(decoded: frames::HuyaFrame, emoticons: &emoticon::HuyaEmoticonTable) -> DecodedFrame {
     match decoded {
         frames::HuyaFrame::Chat {
             user_name,
@@ -344,4 +328,3 @@ mod tests {
         assert!(emoticon.large);
     }
 }
-

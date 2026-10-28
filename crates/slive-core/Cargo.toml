@@ -38,6 +38,8 @@ futures-util = "0.3"
 # 协议辅助
 regex = "1"
 md-5 = "0.10"
+# 弹幕去重哈希（DanmakuMask，从桥层下沉）
+xxhash-rust = { version = "0.8.5", features = ["xxh3"] }
 chrono = { version = "0.4", features = ["serde"] }
 log = { version = "0.4", features = ["std"] }
 once_cell = "1"

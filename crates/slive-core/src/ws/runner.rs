@@ -21,11 +21,8 @@ use super::frame::{encode_packet, heartbeat_packet, OP_JOIN};
 use super::session::{FrameSource, SessionTuning};
 
 /// 连接工厂：每次（重）连创建新的帧事件源。
-pub type ConnectFactory = Box<
-    dyn FnMut()
-        -> Pin<Box<dyn Future<Output = Result<Box<dyn FrameSource>, SliveError>> + Send>>
-        + Send,
->;
+pub type ConnectFactory =
+    Box<dyn FnMut() -> Pin<Box<dyn Future<Output = Result<Box<dyn FrameSource>, SliveError>> + Send>> + Send>;
 
 /// join 帧：op=7 + join 载荷（AC-11 的 golden 断言落点）。
 pub fn join_frame(args: &BiliBiliDanmakuArgs) -> Vec<u8> {
@@ -56,11 +53,11 @@ pub async fn run_session(
         }
         let mut source = match (connect)().await {
             Ok(s) => {
-                eprintln!("[danmaku-rs] connect ok");
+                log::debug!("[danmaku-rs] connect ok");
                 s
             }
             Err(e) => {
-                eprintln!("[danmaku-rs] connect failed: {e}");
+                log::warn!("[danmaku-rs] connect failed: {e}");
                 if reconnect_or_close(&mut attempt, &tuning, time.as_ref(), &mut on_item).await {
                     return;
                 }
@@ -69,7 +66,7 @@ pub async fn run_session(
         };
         on_item(LiveDanmuItem::Control(LiveDanmuControlEvent::Ready));
         if let Err(e) = source.send(join_frame(&args)).await {
-            eprintln!("[danmaku-rs] join send failed: {e}");
+            log::warn!("[danmaku-rs] join send failed: {e}");
             if reconnect_or_close(&mut attempt, &tuning, time.as_ref(), &mut on_item).await {
                 return;
             }
@@ -102,8 +99,8 @@ pub async fn run_session(
             let Some(Ok(frame)) = frame else {
                 // 诊断：断开原因必须可见（服务端 Close=None / 传输错误=Err）
                 match &frame {
-                    Some(Err(e)) => eprintln!("[danmaku-rs] frame error: {e}"),
-                    _ => eprintln!("[danmaku-rs] connection closed by server"),
+                    Some(Err(e)) => log::warn!("[danmaku-rs] frame error: {e}"),
+                    _ => log::warn!("[danmaku-rs] connection closed by server"),
                 }
                 if reconnect_or_close(&mut attempt, &tuning, time.as_ref(), &mut on_item).await {
                     return;
@@ -115,13 +112,13 @@ pub async fn run_session(
             if !first_frame_logged {
                 first_frame_logged = true;
                 match crate::ws::frame::parse_header(&frame) {
-                    Ok(h) => eprintln!(
+                    Ok(h) => log::warn!(
                         "[danmaku-rs] first frame: op={} protover={} body_len={}",
                         h.op,
                         h.protover,
                         frame.len().saturating_sub(16)
                     ),
-                    Err(e) => eprintln!("[danmaku-rs] first frame 解析失败: {e}"),
+                    Err(e) => log::warn!("[danmaku-rs] first frame 解析失败: {e}"),
                 }
             }
             if time.unix_secs() >= last_heartbeat + tuning.heartbeat_secs
@@ -183,10 +180,7 @@ mod tests {
         .expect("合法 args")
     }
 
-    fn collector() -> (
-        Arc<StdMutex<Vec<LiveDanmuItem>>>,
-        impl FnMut(LiveDanmuItem) + Send,
-    ) {
+    fn collector() -> (Arc<StdMutex<Vec<LiveDanmuItem>>>, impl FnMut(LiveDanmuItem) + Send) {
         let items: Arc<StdMutex<Vec<LiveDanmuItem>>> = Arc::new(StdMutex::new(Vec::new()));
         let sink = Arc::clone(&items);
         (items, move |item| sink.lock().expect("sink").push(item))
@@ -306,12 +300,7 @@ mod tests {
         );
         let reconnects = got
             .iter()
-            .filter(|i| {
-                matches!(
-                    i,
-                    LiveDanmuItem::Control(LiveDanmuControlEvent::Reconnecting { .. })
-                )
-            })
+            .filter(|i| matches!(i, LiveDanmuItem::Control(LiveDanmuControlEvent::Reconnecting { .. })))
             .count();
         assert_eq!(reconnects, 5, "最多 5 次重连（5s×5）");
         assert!(matches!(
@@ -375,15 +364,7 @@ mod tests {
         });
         let (items, on_item) = collector();
         let (_stop_tx, stop_rx) = tokio::sync::watch::channel(false);
-        run_session(
-            args(),
-            connect,
-            time,
-            SessionTuning::bilibili(),
-            stop_rx,
-            on_item,
-        )
-        .await;
+        run_session(args(), connect, time, SessionTuning::bilibili(), stop_rx, on_item).await;
 
         // 事件里应有首帧的 online 消息，且会话最终因队列耗尽走 Closed —— 只关心发送序列
         let got = sent.lock().expect("sent");

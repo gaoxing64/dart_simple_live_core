@@ -19,9 +19,7 @@ use crate::ws::{ConnectFactory, FrameSource, SessionTuning};
 /// 会话内使用的帧事件源类型别名（便于文档引用；生产实现由桥层注入）。
 pub type DouyuFrameSource = Box<dyn FrameSource>;
 
-use super::args::{
-    DouyuDanmakuArgs, HEARTBEAT_SECS, MAX_RECONNECT, RECONNECT_DELAY_SECS,
-};
+use super::args::{DouyuDanmakuArgs, HEARTBEAT_SECS, MAX_RECONNECT, RECONNECT_DELAY_SECS};
 use super::parse::decode_frame;
 use super::protocol::{heartbeat_payload, join_payload, login_payload, serialize};
 
@@ -70,7 +68,7 @@ pub async fn run_session(
         let mut source = match (connect)().await {
             Ok(s) => s,
             Err(e) => {
-                eprintln!("[douyu-danmaku] connect failed: {e}");
+                log::warn!("[douyu-danmaku] connect failed: {e}");
                 if reconnect_or_close(&mut attempt, &tuning, time.as_ref(), &mut on_item).await {
                     return;
                 }
@@ -82,7 +80,7 @@ pub async fn run_session(
         let mut joined = true;
         for frame in join_frames(&args) {
             if let Err(e) = source.send(frame).await {
-                eprintln!("[douyu-danmaku] join send failed: {e}");
+                log::warn!("[douyu-danmaku] join send failed: {e}");
                 joined = false;
                 break;
             }
@@ -115,8 +113,8 @@ pub async fn run_session(
             };
             let Some(Ok(frame)) = frame else {
                 match &frame {
-                    Some(Err(e)) => eprintln!("[douyu-danmaku] frame error: {e}"),
-                    _ => eprintln!("[douyu-danmaku] connection closed by server"),
+                    Some(Err(e)) => log::warn!("[douyu-danmaku] frame error: {e}"),
+                    _ => log::warn!("[douyu-danmaku] connection closed by server"),
                 }
                 if reconnect_or_close(&mut attempt, &tuning, time.as_ref(), &mut on_item).await {
                     return;
@@ -172,10 +170,7 @@ mod tests {
         DouyuDanmakuArgs::new("999").expect("合法房间号")
     }
 
-    fn collector() -> (
-        Arc<StdMutex<Vec<LiveDanmuItem>>>,
-        impl FnMut(LiveDanmuItem) + Send,
-    ) {
+    fn collector() -> (Arc<StdMutex<Vec<LiveDanmuItem>>>, impl FnMut(LiveDanmuItem) + Send) {
         let items: Arc<StdMutex<Vec<LiveDanmuItem>>> = Arc::new(StdMutex::new(Vec::new()));
         let sink = Arc::clone(&items);
         (items, move |item| sink.lock().expect("sink").push(item))
@@ -197,10 +192,7 @@ mod tests {
 
     #[test]
     fn heartbeat_frame_is_mrkl() {
-        assert_eq!(
-            deserialize(&heartbeat_frame()).as_deref(),
-            Some("type@=mrkl/")
-        );
+        assert_eq!(deserialize(&heartbeat_frame()).as_deref(), Some("type@=mrkl/"));
     }
 
     #[tokio::test]
@@ -257,12 +249,7 @@ mod tests {
         let got = items.lock().expect("items").clone();
         let reconnects = got
             .iter()
-            .filter(|i| {
-                matches!(
-                    i,
-                    LiveDanmuItem::Control(LiveDanmuControlEvent::Reconnecting { .. })
-                )
-            })
+            .filter(|i| matches!(i, LiveDanmuItem::Control(LiveDanmuControlEvent::Reconnecting { .. })))
             .count();
         assert_eq!(reconnects, 5, "最多 5 次重连（5s x 5）");
         assert!(matches!(

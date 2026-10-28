@@ -3,7 +3,8 @@
 use crate::models::LiveMessage;
 
 /// 连接生命周期控制事件。
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "type", content = "data", rename_all = "snake_case")]
 pub enum LiveDanmuControlEvent {
     /// 连接就绪（join 包已发出）。
     Ready,
@@ -14,7 +15,8 @@ pub enum LiveDanmuControlEvent {
 }
 
 /// 弹幕流条目：业务消息或控制事件。
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "type", content = "data", rename_all = "snake_case")]
 pub enum LiveDanmuItem {
     /// 业务消息（聊天 / 人气 / 醒目留言）。
     Message(Box<LiveMessage>),
