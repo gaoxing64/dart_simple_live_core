@@ -27,7 +27,6 @@ import 'package:simple_live_core/src/rust/api/slive/twitch/site.dart' as rust_tw
 import 'package:simple_live_core/src/rust/api/slive/models/danmu.dart' as rust_danmu;
 
 import 'rust_site_models.dart';
-import 'package:flutter/foundation.dart';
 
 /// Twitch 的 Rust Core 站点实现（D2：Dart 直连 FRB API，无 Dart 协议实现）。
 class RustTwitchSite extends LiveSite {
@@ -217,7 +216,7 @@ class RustTwitchDanmaku extends LiveDanmaku {
       onError: (Object e) {
         // 流级错误（解码失败等）不中断弹幕，记录即可
         // ignore: avoid_print
-        debugPrint('[rust-twitch-danmaku] stream ERROR: $e');
+        CoreLog.error(e);
       },
       cancelOnError: false,
     );

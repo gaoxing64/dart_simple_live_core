@@ -19,7 +19,6 @@ import 'package:simple_live_core/src/rust/api/slive/models/danmu.dart' as rust_d
 import 'package:simple_live_core/simple_live_core.dart';
 
 import 'rust_site_models.dart';
-import 'package:flutter/foundation.dart';
 
 /// 虎牙的 Rust Core 站点实现（D2：Dart 直连 FRB API，无 Dart 协议实现）。
 class RustHuyaSite extends LiveSite {
@@ -196,7 +195,7 @@ class RustHuyaDanmaku extends LiveDanmaku {
       onError: (Object e) {
         // 流级错误（解码失败等）不中断弹幕，记录即可
         // ignore: avoid_print
-        debugPrint('[rust-huya-danmaku] stream ERROR: $e');
+        CoreLog.error(e);
       },
       // Rust 会话异常退出（如线程 panic）时 sink 被 drop，流会静默 onDone；
       // 不接这个回调的话 UI 看起来就是"弹幕卡住"，没有任何提示。

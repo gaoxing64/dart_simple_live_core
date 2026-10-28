@@ -19,7 +19,6 @@ import 'package:simple_live_core/simple_live_core.dart';
 
 import 'rust_douyin_models.dart';
 import 'rust_site_models.dart';
-import 'package:flutter/foundation.dart';
 
 /// 抖音的 Rust Core 站点实现（类型翻译 + 转发，零协议逻辑）。
 class RustDouyinSite extends LiveSite {
@@ -227,7 +226,7 @@ class RustDouyinDanmaku extends LiveDanmaku {
       onError: (Object e) {
         // 流级错误（解码失败等）不中断弹幕，记录即可
         // ignore: avoid_print
-        debugPrint('[rust-douyin-danmaku] stream ERROR: $e');
+        CoreLog.error(e);
       },
       cancelOnError: false,
     );

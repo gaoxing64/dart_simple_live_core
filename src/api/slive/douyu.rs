@@ -8,19 +8,14 @@
 //! `danmaku.rs` 的 `DanmakuConnection::start`），以免多平台并行期间互相覆盖桥层文件。
 
 use flutter_rust_bridge::frb;
-use slive_core::platforms::douyu::danmaku::args::DouyuDanmakuArgs;
-use slive_core::platforms::douyu::danmaku::session::{douyu_tuning, run_session};
 use slive_core::platforms::douyu::DouyuSite;
-use slive_core::time::SystemClock;
-use slive_core::ws::ConnectFactory;
-use std::sync::Arc;
 use tokio::sync::watch;
 
 use crate::api::slive::error::CoreError;
 use crate::api::slive::models::LiveDanmuItem;
 use crate::api::slive::models::{
-    LiveCategory, LiveCategoryResult, LivePlayQuality, LivePlayUrl, LiveRoomDetail,
-    LiveSearchAnchorResult, LiveSearchRoomResult, LiveSubCategory, LiveSuperChatMessage,
+    LiveCategory, LiveCategoryResult, LivePlayQuality, LivePlayUrl, LiveRoomDetail, LiveSearchAnchorResult,
+    LiveSearchRoomResult, LiveSubCategory, LiveSuperChatMessage,
 };
 use crate::frb_generated::StreamSink;
 
@@ -49,34 +44,16 @@ impl DouyuDanmakuConnection {
     /// 空房间号 -> `CoreError(InvalidInput)`，对应 Dart 侧解析失败抛异常的口径（J-10）。
     /// 多路播放各自持句柄调用，会话之间互不停止。
     pub fn start(&self, room_id: String, sink: StreamSink<LiveDanmuItem>) -> Result<(), CoreError> {
-        let args = DouyuDanmakuArgs::new(&room_id).map_err(CoreError::from)?;
-        let stop_rx = self.stop_tx.subscribe();
-
-        let connect: ConnectFactory = slive_core::ws::tcp::factory(args.connect_url());
-
-        // ⚠️ FRB 的 FFI 调用线程没有 tokio runtime —— 在这里 `tokio::spawn` 会 panic
-        // （"there is no reactor running"，B站真机日志抓到）。必须独立线程 + 自建 runtime。
-        std::thread::spawn(move || {
-            let runtime = tokio::runtime::Builder::new_current_thread()
-                .enable_all()
-                .build()
-                .expect("douyu danmaku runtime");
-            runtime.block_on(async move {
-                run_session(
-                    args,
-                    connect,
-                    Arc::new(SystemClock),
-                    douyu_tuning(),
-                    stop_rx,
-                    move |item| {
-                        let _ = sink.add(item);
-                    },
-                )
-                .await;
-            });
-        });
-
-        Ok(())
+        slive_host::logging::ensure_stderr_logger();
+        slive_host::danmaku::spawn(
+            slive_core::platforms::Platform::Douyu,
+            &room_id,
+            self.stop_tx.subscribe(),
+            move |item| {
+                let _ = sink.add(item);
+            },
+        )
+        .map_err(CoreError::from)
     }
 
     /// 手动停止本会话（对齐 Dart `DouyuDanmaku.stop()`：发出 `Closed`，不再重连）。
@@ -156,46 +133,23 @@ impl LiveDouyuSite {
     }
 
     /// F-04 搜索房间。
-    pub async fn search_rooms(
-        &self,
-        keyword: String,
-        page: i32,
-    ) -> Result<LiveSearchRoomResult, CoreError> {
-        self.inner
-            .search_rooms(keyword, page)
-            .await
-            .map_err(CoreError::from)
+    pub async fn search_rooms(&self, keyword: String, page: i32) -> Result<LiveSearchRoomResult, CoreError> {
+        self.inner.search_rooms(keyword, page).await.map_err(CoreError::from)
     }
 
     /// F-05 搜索主播。
-    pub async fn search_anchors(
-        &self,
-        keyword: String,
-        page: i32,
-    ) -> Result<LiveSearchAnchorResult, CoreError> {
-        self.inner
-            .search_anchors(keyword, page)
-            .await
-            .map_err(CoreError::from)
+    pub async fn search_anchors(&self, keyword: String, page: i32) -> Result<LiveSearchAnchorResult, CoreError> {
+        self.inner.search_anchors(keyword, page).await.map_err(CoreError::from)
     }
 
     /// F-06 房间详情。
     pub async fn get_room_detail(&self, room_id: String) -> Result<LiveRoomDetail, CoreError> {
-        self.inner
-            .get_room_detail(room_id)
-            .await
-            .map_err(CoreError::from)
+        self.inner.get_room_detail(room_id).await.map_err(CoreError::from)
     }
 
     /// F-07 清晰度列表。
-    pub async fn get_play_qualities(
-        &self,
-        detail: LiveRoomDetail,
-    ) -> Result<Vec<LivePlayQuality>, CoreError> {
-        self.inner
-            .get_play_qualities(detail)
-            .await
-            .map_err(CoreError::from)
+    pub async fn get_play_qualities(&self, detail: LiveRoomDetail) -> Result<Vec<LivePlayQuality>, CoreError> {
+        self.inner.get_play_qualities(detail).await.map_err(CoreError::from)
     }
 
     /// F-08 播放地址。
@@ -204,25 +158,16 @@ impl LiveDouyuSite {
         detail: LiveRoomDetail,
         quality: LivePlayQuality,
     ) -> Result<LivePlayUrl, CoreError> {
-        self.inner
-            .get_play_urls(detail, quality)
-            .await
-            .map_err(CoreError::from)
+        self.inner.get_play_urls(detail, quality).await.map_err(CoreError::from)
     }
 
     /// F-09 直播状态。
     pub async fn get_live_status(&self, room_id: String) -> Result<bool, CoreError> {
-        self.inner
-            .get_live_status(room_id)
-            .await
-            .map_err(CoreError::from)
+        self.inner.get_live_status(room_id).await.map_err(CoreError::from)
     }
 
     /// F-10 房间 SC 列表（斗鱼 HTTP 侧不提供，恒空；绑定层映射回 Dart 单数名）。
-    pub async fn get_super_chat_messages(
-        &self,
-        room_id: String,
-    ) -> Result<Vec<LiveSuperChatMessage>, CoreError> {
+    pub async fn get_super_chat_messages(&self, room_id: String) -> Result<Vec<LiveSuperChatMessage>, CoreError> {
         self.inner
             .get_super_chat_messages(room_id)
             .await
@@ -239,10 +184,7 @@ impl LiveDouyuSite {
         &self,
         qrcode_key: String,
     ) -> Result<crate::api::slive::models::QrPollResult, CoreError> {
-        self.inner
-            .get_qr_poll_result(qrcode_key)
-            .await
-            .map_err(CoreError::from)
+        self.inner.get_qr_poll_result(qrcode_key).await.map_err(CoreError::from)
     }
 
     /// F-20 账号信息。
@@ -250,21 +192,11 @@ impl LiveDouyuSite {
         &self,
         credential: String,
     ) -> Result<crate::api::slive::models::AccountInfo, CoreError> {
-        self.inner
-            .get_account_info(credential)
-            .await
-            .map_err(CoreError::from)
+        self.inner.get_account_info(credential).await.map_err(CoreError::from)
     }
 
     /// 刷新 cookie（`LTP0`/`dy_did` 留空则用句柄内已有值）。
-    pub async fn refresh_cookie(
-        &self,
-        dy_did: String,
-        ltp0: String,
-    ) -> Result<String, CoreError> {
-        self.inner
-            .refresh_cookie(&dy_did, &ltp0)
-            .await
-            .map_err(CoreError::from)
+    pub async fn refresh_cookie(&self, dy_did: String, ltp0: String) -> Result<String, CoreError> {
+        self.inner.refresh_cookie(&dy_did, &ltp0).await.map_err(CoreError::from)
     }
 }
