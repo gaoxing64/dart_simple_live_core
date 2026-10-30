@@ -244,10 +244,9 @@ async fn sign_encryption_is_cached_for_ttl() {
         sort: 0,
     };
     h.site.get_play_qualities(detail("252140")).await.expect("首次");
-    h.site
-        .get_play_urls(detail("252140"), quality(&h))
-        .await
-        .expect("取流");
+    // 该样本只有 cdns/multirates、没有 rtmp 直链，所以取流返回「全部线路不可用」
+    // 是正确语义（单线失败跳过、全失败报错）。本用例只关心加密材料的回源次数。
+    let _ = h.site.get_play_urls(detail("252140"), quality(&h)).await;
     assert_eq!(
         h.get.request_count("getEncryption"),
         1,

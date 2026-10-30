@@ -131,7 +131,6 @@ enum LiveMessageType {
   gift,
   online,
   superChat,
-  ;
 }
 
 class LiveSuperChatMessage {

@@ -9,11 +9,6 @@ import '../models/danmu.dart';
 import '../models/message.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `parse_channel_args`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `TwitchIrcFrameSource`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `next_frame`, `send`
-// These functions are ignored (category: IgnoreBecauseExplicitAttribute): `connect_twitch_frame_source`
-
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<TwitchDanmakuConnection>>
 abstract class TwitchDanmakuConnection implements RustOpaqueInterface {
   /// 构造连接句柄（尚未连接；`start` 之后才持有会话）。

@@ -25,19 +25,25 @@ abstract class LiveHuyaSite implements RustOpaqueInterface {
   Future<List<LiveCategory>> getCategories();
 
   /// F-02 分类下房间。
-  Future<LiveCategoryResult> getCategoryRooms(
-      {required LiveSubCategory category, required int page, int? pageSize});
+  Future<LiveCategoryResult> getCategoryRooms({
+    required LiveSubCategory category,
+    required int page,
+    int? pageSize,
+  });
 
   /// F-09 直播状态。
   Future<bool> getLiveStatus({required String roomId});
 
   /// F-07 清晰度列表（跳过 4K）。
-  Future<List<LivePlayQuality>> getPlayQualities(
-      {required LiveRoomDetail detail});
+  Future<List<LivePlayQuality>> getPlayQualities({
+    required LiveRoomDetail detail,
+  });
 
   /// F-08 播放地址（逐线路换 TARS token）。
-  Future<LivePlayUrl> getPlayUrls(
-      {required LiveRoomDetail detail, required LivePlayQuality quality});
+  Future<LivePlayUrl> getPlayUrls({
+    required LiveRoomDetail detail,
+    required LivePlayQuality quality,
+  });
 
   /// F-18 生成登录二维码（虎牙 Dart core 未实现 -> 抛 `CoreError`）。
   Future<QrCode> getQrCode();
@@ -46,8 +52,10 @@ abstract class LiveHuyaSite implements RustOpaqueInterface {
   Future<QrPollResult> getQrPollResult({required String qrcodeKey});
 
   /// F-03 推荐房间。
-  Future<LiveCategoryResult> getRecommendRooms(
-      {required int page, int? pageSize});
+  Future<LiveCategoryResult> getRecommendRooms({
+    required int page,
+    int? pageSize,
+  });
 
   /// F-06 房间详情（含弹幕参数与取流数据）。
   Future<LiveRoomDetail> getRoomDetail({required String roomId});
@@ -56,8 +64,9 @@ abstract class LiveHuyaSite implements RustOpaqueInterface {
   Future<List<LiveSubCategory>> getSubCategories({required String parentId});
 
   /// F-10 房间 SC 列表（方法名复数，对齐上游；绑定层映射回 Dart 单数名，J-4/J-8）。
-  Future<List<LiveSuperChatMessage>> getSuperChatMessages(
-      {required String roomId});
+  Future<List<LiveSuperChatMessage>> getSuperChatMessages({
+    required String roomId,
+  });
 
   /// 站点ID（`"huya"`）。
   String id();
@@ -70,12 +79,16 @@ abstract class LiveHuyaSite implements RustOpaqueInterface {
       RustLib.instance.api.crateApiSliveHuyaSiteLiveHuyaSiteNew();
 
   /// F-05 搜索主播。
-  Future<LiveSearchAnchorResult> searchAnchors(
-      {required String keyword, required int page});
+  Future<LiveSearchAnchorResult> searchAnchors({
+    required String keyword,
+    required int page,
+  });
 
   /// F-04 搜索房间。
-  Future<LiveSearchRoomResult> searchRooms(
-      {required String keyword, required int page});
+  Future<LiveSearchRoomResult> searchRooms({
+    required String keyword,
+    required int page,
+  });
 
   /// F-17 注入凭证（虎牙仅识别 `ua` 键）。
   void setSiteAttrs({required String data});

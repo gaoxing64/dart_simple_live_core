@@ -14,10 +14,6 @@ import 'models/result.dart';
 import 'models/room.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `connect_douyin_ws`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `DouyinWsFrameSource`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `next_frame`, `send`
-
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<DouyinDanmakuConnection>>
 abstract class DouyinDanmakuConnection implements RustOpaqueInterface {
   /// 构造连接句柄（尚未连接；`start` 之后才持有会话）。
@@ -47,19 +43,25 @@ abstract class LiveDouyinSite implements RustOpaqueInterface {
   Future<List<LiveCategory>> getCategories();
 
   /// 分类下房间（`page_size` 服务端不认，保留形参对齐 Dart 签名）。
-  Future<LiveCategoryResult> getCategoryRooms(
-      {required LiveSubCategory category, required int page, int? pageSize});
+  Future<LiveCategoryResult> getCategoryRooms({
+    required LiveSubCategory category,
+    required int page,
+    int? pageSize,
+  });
 
   /// 直播状态。
   Future<bool> getLiveStatus({required String roomId});
 
   /// 清晰度列表（本地计算，无网络请求）。
-  Future<List<LivePlayQuality>> getPlayQualities(
-      {required LiveRoomDetail detail});
+  Future<List<LivePlayQuality>> getPlayQualities({
+    required LiveRoomDetail detail,
+  });
 
   /// 播放地址（本地计算，无网络请求）。
-  Future<LivePlayUrl> getPlayUrls(
-      {required LiveRoomDetail detail, required LivePlayQuality quality});
+  Future<LivePlayUrl> getPlayUrls({
+    required LiveRoomDetail detail,
+    required LivePlayQuality quality,
+  });
 
   /// 登录二维码（抖音不支持扫码登录）。
   Future<QrCode> getQrCode();
@@ -68,15 +70,18 @@ abstract class LiveDouyinSite implements RustOpaqueInterface {
   Future<QrPollResult> getQrPollResult({required String qrcodeKey});
 
   /// 推荐房间。
-  Future<LiveCategoryResult> getRecommendRooms(
-      {required int page, int? pageSize});
+  Future<LiveCategoryResult> getRecommendRooms({
+    required int page,
+    int? pageSize,
+  });
 
   /// 房间详情（三段降级）。
   Future<LiveRoomDetail> getRoomDetail({required String roomId});
 
   /// 房间 SC 列表（抖音无此能力，恒空）。
-  Future<List<LiveSuperChatMessage>> getSuperChatMessages(
-      {required String roomId});
+  Future<List<LiveSuperChatMessage>> getSuperChatMessages({
+    required String roomId,
+  });
 
   /// 站点 ID（`"douyin"`）。
   String id();
@@ -89,12 +94,16 @@ abstract class LiveDouyinSite implements RustOpaqueInterface {
       RustLib.instance.api.crateApiSliveDouyinLiveDouyinSiteNew();
 
   /// 搜索主播（抖音不支持，恒报错）。
-  Future<LiveSearchAnchorResult> searchAnchors(
-      {required String keyword, required int page});
+  Future<LiveSearchAnchorResult> searchAnchors({
+    required String keyword,
+    required int page,
+  });
 
   /// 搜索直播间。
-  Future<LiveSearchRoomResult> searchRooms(
-      {required String keyword, required int page});
+  Future<LiveSearchRoomResult> searchRooms({
+    required String keyword,
+    required int page,
+  });
 
   /// 注入凭证 / 配置（`{"cookie": "...", "hlsFirst": false}`）。
   void setSiteAttrs({required String data});

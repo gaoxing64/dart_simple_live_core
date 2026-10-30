@@ -15,3 +15,6 @@
 
 # Rust（Rust workspace 根自 2026-10-17 迁入本目录）
 /target
+
+# FVM version cache（codegen 经 FVM 安装 Flutter 时生成）
+.fvm/

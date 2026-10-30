@@ -25,19 +25,25 @@ abstract class LiveTwitchSite implements RustOpaqueInterface {
   Future<List<LiveCategory>> getCategories();
 
   /// F-02 分类下房间（Twitch 恒空）。
-  Future<LiveCategoryResult> getCategoryRooms(
-      {required LiveSubCategory category, required int page, int? pageSize});
+  Future<LiveCategoryResult> getCategoryRooms({
+    required LiveSubCategory category,
+    required int page,
+    int? pageSize,
+  });
 
   /// F-09 直播状态。
   Future<bool> getLiveStatus({required String roomId});
 
   /// F-07 清晰度列表（GQL token + usher m3u8 解析）。
-  Future<List<LivePlayQuality>> getPlayQualities(
-      {required LiveRoomDetail detail});
+  Future<List<LivePlayQuality>> getPlayQualities({
+    required LiveRoomDetail detail,
+  });
 
   /// F-08 播放地址。
-  Future<LivePlayUrl> getPlayUrls(
-      {required LiveRoomDetail detail, required LivePlayQuality quality});
+  Future<LivePlayUrl> getPlayUrls({
+    required LiveRoomDetail detail,
+    required LivePlayQuality quality,
+  });
 
   /// F-18 二维码（Twitch 不支持）。
   Future<QrCode> getQrCode();
@@ -46,15 +52,18 @@ abstract class LiveTwitchSite implements RustOpaqueInterface {
   Future<QrPollResult> getQrPollResult({required String qrcodeKey});
 
   /// F-03 推荐房间（Twitch 不支持）。
-  Future<LiveCategoryResult> getRecommendRooms(
-      {required int page, int? pageSize});
+  Future<LiveCategoryResult> getRecommendRooms({
+    required int page,
+    int? pageSize,
+  });
 
   /// F-06 房间详情（`ChannelShell` + `StreamMetadata` 一次批量）。
   Future<LiveRoomDetail> getRoomDetail({required String roomId});
 
   /// F-10 SC 列表（Twitch 恒空；方法名复数，绑定层映射回 Dart 单数名，J-4/J-8）。
-  Future<List<LiveSuperChatMessage>> getSuperChatMessages(
-      {required String roomId});
+  Future<List<LiveSuperChatMessage>> getSuperChatMessages({
+    required String roomId,
+  });
 
   /// 站点 ID（`"twitch"`）。
   String id();
@@ -67,12 +76,16 @@ abstract class LiveTwitchSite implements RustOpaqueInterface {
       RustLib.instance.api.crateApiSliveTwitchSiteLiveTwitchSiteNew();
 
   /// F-05 搜索主播（Twitch 不支持）。
-  Future<LiveSearchAnchorResult> searchAnchors(
-      {required String keyword, required int page});
+  Future<LiveSearchAnchorResult> searchAnchors({
+    required String keyword,
+    required int page,
+  });
 
   /// F-04 搜索房间（Twitch 不支持）。
-  Future<LiveSearchRoomResult> searchRooms(
-      {required String keyword, required int page});
+  Future<LiveSearchRoomResult> searchRooms({
+    required String keyword,
+    required int page,
+  });
 
   /// F-17 注入凭证（Twitch 匿名链路不支持）。
   void setSiteAttrs({required String data});

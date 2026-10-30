@@ -16,6 +16,7 @@ pub mod error;
 pub mod http;
 pub mod logging;
 pub mod models;
+pub mod play;
 pub mod platforms;
 pub mod tars;
 pub mod testing;

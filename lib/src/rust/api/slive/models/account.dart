@@ -99,5 +99,4 @@ enum QrStatus {
   scanned,
   expired,
   failed,
-  ;
 }

@@ -6,6 +6,18 @@
 import '../../../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
+enum LineHint {
+  primary,
+  mcdn,
+  scdn,
+}
+
+enum LineKind {
+  flv,
+  hls,
+  other,
+}
+
 class LivePlayQuality {
   final String quality;
   final String data;
@@ -49,4 +61,39 @@ class LivePlayUrl {
           runtimeType == other.runtimeType &&
           urls == other.urls &&
           headers == other.headers;
+}
+
+class PlayLine {
+  final String url;
+  final LineKind kind;
+  final String host;
+  final LineHint hint;
+  final BigInt originIndex;
+
+  const PlayLine({
+    required this.url,
+    required this.kind,
+    required this.host,
+    required this.hint,
+    required this.originIndex,
+  });
+
+  @override
+  int get hashCode =>
+      url.hashCode ^
+      kind.hashCode ^
+      host.hashCode ^
+      hint.hashCode ^
+      originIndex.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PlayLine &&
+          runtimeType == other.runtimeType &&
+          url == other.url &&
+          kind == other.kind &&
+          host == other.host &&
+          hint == other.hint &&
+          originIndex == other.originIndex;
 }

@@ -68,6 +68,16 @@ pub trait LiveSite: Send + Sync {
     async fn get_room_detail(&self, room_id: String) -> Result<LiveRoomDetail, SliveError>;
     async fn get_play_qualities(&self, detail: LiveRoomDetail) -> Result<Vec<LivePlayQuality>, SliveError>;
     async fn get_play_urls(&self, detail: LiveRoomDetail, quality: LivePlayQuality) -> Result<LivePlayUrl, SliveError>;
+
+    /// 把 [`get_play_urls`] 的裸 URL 列表还原成结构化线路（容器 / 主机 / 平台标记）。
+    ///
+    /// 同步、无 I/O：只做纯解析，**不重发请求**，因此可以安全地放在起播路径上。
+    /// 默认实现按 `id()` 走通用分类；平台若能在取流阶段拿到更准的语义（例如斗鱼
+    /// 的 cdn 名），可覆盖本方法。排序不在这里做 —— 见 [`crate::play::rank`]。
+    fn play_lines(&self, play: &LivePlayUrl) -> Vec<crate::play::PlayLine> {
+        crate::play::classify(&self.id(), &play.urls)
+    }
+
     async fn get_live_status(&self, room_id: String) -> Result<bool, SliveError>;
     async fn get_super_chat_messages(&self, room_id: String) -> Result<Vec<LiveSuperChatMessage>, SliveError>;
     async fn get_qr_code(&self) -> Result<QrCode, SliveError>;

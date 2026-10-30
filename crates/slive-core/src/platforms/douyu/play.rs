@@ -93,13 +93,45 @@ pub(crate) async fn fetch_urls(
     quality: &LivePlayQuality,
 ) -> Result<LivePlayUrl, SliveError> {
     let data = PlayData::from_json(&quality.data)?;
-    let mut urls = Vec::new();
-    for cdn in &data.cdns {
-        let url = fetch_url_for_cdn(site, &detail.room_id, data.rate, cdn).await?;
-        // 空串表示该线路没取到直链（Dart: `if (url.isNotEmpty)` 跳过）
-        if !url.is_empty() {
-            urls.push(url);
+    // 并发前先预热一次签名材料：`build_sign` 内部会 `ensure_enc_key`，
+    // 冷启动/过期时 N 条线路会同时 miss、各自回源一次 getEncryption。
+    super::sign::ensure_enc_key(site).await?;
+    // 逐线路取直链是独立请求，串行做会把 N 条线路的往返时间累加起来
+    // （实测斗鱼 8~12 条线路时这一环是起播最大头）。并发发出去、按原序收集，
+    // 顺序语义不变（`urls` 下标仍对应 `data.cdns` 下标）。
+    let fetched = futures_util::future::join_all(
+        data.cdns
+            .iter()
+            .map(|cdn| fetch_url_for_cdn(site, &detail.room_id, data.rate, cdn)),
+    )
+    .await;
+    let mut urls = Vec::with_capacity(fetched.len());
+    let mut last_error: Option<String> = None;
+    for (cdn, result) in data.cdns.iter().zip(fetched) {
+        match result {
+            // 空串表示该线路没取到直链（Dart: `if (url.isNotEmpty)` 跳过）
+            Ok(url) if !url.is_empty() => urls.push(url),
+            Ok(_) => {}
+            Err(e) => {
+                // 单线失败只跳过该线路，不让整路取流失败（对齐 Dart 逐条 catch）。
+                log::warn!("斗鱼取流跳过线路 {cdn}: {e}");
+                last_error = Some(e.to_string());
+            }
         }
+    }
+    // 单线失败跳过、**全失败才报错**：并发化之前这里靠 `?` 直接上抛，
+    // 不能因为改并发就退化成「成功但零地址」（调用方只会看到一句泛化的提示）。
+    if urls.is_empty() {
+        return Err(SliveError::Api {
+            code: -1,
+            message: format!(
+                "斗鱼取流失败：{} 条线路均不可用{}",
+                data.cdns.len(),
+                last_error
+                    .map(|e| format!("（最后一条：{e}）"))
+                    .unwrap_or_default()
+            ),
+        });
     }
     // O-7（直链续流 renewers）本批不做：需 FRB 回调通道，已登记待办。
     Ok(LivePlayUrl {
@@ -127,8 +159,17 @@ pub(crate) async fn fetch_url_for_cdn(
 /// 上游标注为临时方案（Dart `_applyOverseaExpireWorkaround`）；**首次取流与续流必须走同一条规则**，
 /// 否则续流拿回来的直链又变回 5 分钟寿命。
 pub(crate) fn apply_oversea_expire_workaround(url: &str) -> String {
-    if url.contains("expire=300") && url.contains("fcdn=ws") {
-        format!("{url}&expire=0")
+    // 必须按键值精确比对：`contains("expire=300")` 会命中 `expire=3000`，
+    // `contains("fcdn=ws")` 会命中 `fcdn=wss`，把不需要改写的直链也改写掉。
+    let has_param = |key: &str, value: &str| {
+        url.split(['?', '&'])
+            .filter_map(|pair| pair.split_once('='))
+            .any(|(k, v)| k == key && v == value)
+    };
+    if has_param("expire", "300") && has_param("fcdn", "ws") {
+        // 无 query 时用 `?`，否则 `&`；否则会拼出 `...flv&expire=0` 这种非法地址。
+        let sep = if url.contains('?') { '&' } else { '?' };
+        format!("{url}{sep}expire=0")
     } else {
         url.to_string()
     }

@@ -7,6 +7,7 @@ export 'src/bridge/rust_douyu_site.dart';
 export 'src/bridge/rust_huya_site.dart';
 export 'src/bridge/rust_douyin_site.dart';
 export 'src/bridge/rust_twitch_site.dart';
+export 'src/bridge/rust_play_lines.dart';
 // FRB 生成物公共面：RustLib（init）、DanmakuMask
 // 注意：不导出 api/slive/error.dart —— 桥层只在内部映射 CoreError，
 // 消费方若需判类型按需深导入，避免与业务异常混在同一命名空间。

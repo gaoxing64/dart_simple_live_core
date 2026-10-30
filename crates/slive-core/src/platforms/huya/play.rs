@@ -78,10 +78,19 @@ pub(crate) async fn fetch_urls(
     quality: &LivePlayQuality,
 ) -> Result<LivePlayUrl, SliveError> {
     let quality_data = HuyaQualityData::from_json(&quality.data)?;
-    let mut urls: Vec<String> = Vec::with_capacity(quality_data.urls.len());
 
-    for line in &quality_data.urls {
-        match build_line_url(site, line, quality_data.bit_rate).await {
+    // 每条线路都要单独换 token + 反 anticode，串行会把 N 次往返累加
+    // （虎牙常见 8~12 条线路）。并发发出去、按原序收集，顺序语义不变。
+    let fetched = futures_util::future::join_all(
+        quality_data
+            .urls
+            .iter()
+            .map(|line| build_line_url(site, line, quality_data.bit_rate)),
+    )
+    .await;
+    let mut urls: Vec<String> = Vec::with_capacity(fetched.len());
+    for (line, result) in quality_data.urls.iter().zip(fetched) {
+        match result {
             Ok(url) => urls.push(url),
             Err(e) => {
                 // 单线失败跳过（Dart: catch 后 CoreLog.e）

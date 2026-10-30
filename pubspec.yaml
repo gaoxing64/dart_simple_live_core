@@ -22,4 +22,7 @@ dependencies:
 
 dev_dependencies: 
   lints: ^6.0.0
+  # FRB codegen 前置：生成物含 `@freezed sealed class`（LiveDanmuItem 等）
+  freezed: ^3.0.0
+  build_runner: ^2.4.0
 

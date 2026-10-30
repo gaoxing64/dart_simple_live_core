@@ -9,5 +9,6 @@ pub mod error;
 pub mod huya;
 pub mod huya_site;
 pub mod models;
+pub mod play;
 pub mod site;
 pub mod twitch;

@@ -9,10 +9,6 @@ import 'models/danmu.dart';
 import 'models/message.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `WsFrameSource`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `next_frame`, `send`
-// These functions are ignored (category: IgnoreBecauseExplicitAttribute): `connect_ws_frame_source`
-
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<DanmakuConnection>>
 abstract class DanmakuConnection implements RustOpaqueInterface {
   /// 构造连接句柄（尚未连接；`start` 之后才持有会话）。

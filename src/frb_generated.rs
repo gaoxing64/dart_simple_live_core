@@ -48,7 +48,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 504564523;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 352676654;
 
 // Section: executor
 
@@ -6100,6 +6100,38 @@ fn wire__crate__api__slive__twitch__danmaku__TwitchDanmakuConnection_stop_impl(
         },
     )
 }
+fn wire__crate__api__slive__play__host_order_of_lines_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "host_order_of_lines",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_lines =
+                <Vec<crate::api::slive::models::play::PlayLine>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok =
+                    Ok::<_, ()>(crate::api::slive::play::host_order_of_lines(api_lines))?;
+                std::result::Result::Ok(output_ok)
+            })())
+        },
+    )
+}
 fn wire__crate__api__simple__init_app_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -6131,6 +6163,126 @@ fn wire__crate__api__simple__init_app_impl(
                     std::result::Result::Ok(output_ok)
                 })())
             }
+        },
+    )
+}
+fn wire__crate__api__slive__play__probe_play_lines_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "probe_play_lines",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_platform_id = <String>::sse_decode(&mut deserializer);
+            let api_urls = <Vec<String>>::sse_decode(&mut deserializer);
+            let api_headers =
+                <std::collections::HashMap<String, String>>::sse_decode(&mut deserializer);
+            let api_budget_ms = <u32>::sse_decode(&mut deserializer);
+            let api_prefer_hls = <bool>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, ()>(
+                    (move || async move {
+                        let output_ok = Ok::<_, ()>(
+                            crate::api::slive::play::probe_play_lines(
+                                api_platform_id,
+                                api_urls,
+                                api_headers,
+                                api_budget_ms,
+                                api_prefer_hls,
+                            )
+                            .await,
+                        )?;
+                        std::result::Result::Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__slive__play__rank_play_lines_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "rank_play_lines",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_platform_id = <String>::sse_decode(&mut deserializer);
+            let api_urls = <Vec<String>>::sse_decode(&mut deserializer);
+            let api_prefer_hls = <bool>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Ok::<_, ()>(crate::api::slive::play::rank_play_lines(
+                    api_platform_id,
+                    api_urls,
+                    api_prefer_hls,
+                ))?;
+                std::result::Result::Ok(output_ok)
+            })())
+        },
+    )
+}
+fn wire__crate__api__slive__play__reorder_play_urls_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "reorder_play_urls",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_urls = <Vec<String>>::sse_decode(&mut deserializer);
+            let api_host_order = <Vec<String>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Ok::<_, ()>(crate::api::slive::play::reorder_play_urls(
+                    api_urls,
+                    api_host_order,
+                ))?;
+                std::result::Result::Ok(output_ok)
+            })())
         },
     )
 }
@@ -6289,6 +6441,14 @@ const _: fn() = || {
         let _: chrono::DateTime<chrono::Local> = LiveSuperChatMessage.end_time;
         let _: String = LiveSuperChatMessage.background_color;
         let _: String = LiveSuperChatMessage.background_bottom_color;
+    }
+    {
+        let PlayLine = None::<crate::api::slive::models::play::PlayLine>.unwrap();
+        let _: String = PlayLine.url;
+        let _: crate::api::slive::models::play::LineKind = PlayLine.kind;
+        let _: String = PlayLine.host;
+        let _: crate::api::slive::models::play::LineHint = PlayLine.hint;
+        let _: usize = PlayLine.origin_index;
     }
     {
         let QrCode = None::<crate::api::slive::models::account::QrCode>.unwrap();
@@ -6699,6 +6859,32 @@ impl SseDecode for i64 {
     }
 }
 
+impl SseDecode for crate::api::slive::models::play::LineHint {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::slive::models::play::LineHint::Primary,
+            1 => crate::api::slive::models::play::LineHint::Mcdn,
+            2 => crate::api::slive::models::play::LineHint::Scdn,
+            _ => unreachable!("Invalid variant for LineHint: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::slive::models::play::LineKind {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::slive::models::play::LineKind::Flv,
+            1 => crate::api::slive::models::play::LineKind::Hls,
+            2 => crate::api::slive::models::play::LineKind::Other,
+            _ => unreachable!("Invalid variant for LineKind: {}", inner),
+        };
+    }
+}
+
 impl SseDecode for Vec<String> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -6816,6 +7002,20 @@ impl SseDecode for Vec<crate::api::slive::models::message::LiveSuperChatMessage>
                     deserializer,
                 ),
             );
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::slive::models::play::PlayLine> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::slive::models::play::PlayLine>::sse_decode(
+                deserializer,
+            ));
         }
         return ans_;
     }
@@ -7254,6 +7454,24 @@ impl SseDecode for Option<Vec<crate::api::slive::models::message::LiveMessageEmo
         } else {
             return None;
         }
+    }
+}
+
+impl SseDecode for crate::api::slive::models::play::PlayLine {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_url = <String>::sse_decode(deserializer);
+        let mut var_kind = <crate::api::slive::models::play::LineKind>::sse_decode(deserializer);
+        let mut var_host = <String>::sse_decode(deserializer);
+        let mut var_hint = <crate::api::slive::models::play::LineHint>::sse_decode(deserializer);
+        let mut var_originIndex = <usize>::sse_decode(deserializer);
+        return crate::api::slive::models::play::PlayLine {
+            url: var_url,
+            kind: var_kind,
+            host: var_host,
+            hint: var_hint,
+            origin_index: var_originIndex,
+        };
     }
 }
 
@@ -7835,7 +8053,10 @@ fn pde_ffi_dispatcher_primary_impl(
             rust_vec_len,
             data_len,
         ),
-        113 => wire__crate__api__simple__init_app_impl(port, ptr, rust_vec_len, data_len),
+        114 => wire__crate__api__simple__init_app_impl(port, ptr, rust_vec_len, data_len),
+        115 => {
+            wire__crate__api__slive__play__probe_play_lines_impl(port, ptr, rust_vec_len, data_len)
+        }
         _ => unreachable!(),
     }
 }
@@ -7961,6 +8182,9 @@ fn pde_ffi_dispatcher_sync_impl(
             rust_vec_len,
             data_len,
         ),
+        113 => wire__crate__api__slive__play__host_order_of_lines_impl(ptr, rust_vec_len, data_len),
+        116 => wire__crate__api__slive__play__rank_play_lines_impl(ptr, rust_vec_len, data_len),
+        117 => wire__crate__api__slive__play__reorder_play_urls_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -8218,6 +8442,50 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::danmaku_mask::DanmakuMergeGro
 {
     fn into_into_dart(self) -> crate::api::danmaku_mask::DanmakuMergeGroup {
         self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::slive::models::play::LineHint> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            crate::api::slive::models::play::LineHint::Primary => 0.into_dart(),
+            crate::api::slive::models::play::LineHint::Mcdn => 1.into_dart(),
+            crate::api::slive::models::play::LineHint::Scdn => 2.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<crate::api::slive::models::play::LineHint>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::slive::models::play::LineHint>>
+    for crate::api::slive::models::play::LineHint
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::slive::models::play::LineHint> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::slive::models::play::LineKind> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            crate::api::slive::models::play::LineKind::Flv => 0.into_dart(),
+            crate::api::slive::models::play::LineKind::Hls => 1.into_dart(),
+            crate::api::slive::models::play::LineKind::Other => 2.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<crate::api::slive::models::play::LineKind>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::slive::models::play::LineKind>>
+    for crate::api::slive::models::play::LineKind
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::slive::models::play::LineKind> {
+        self.into()
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
@@ -8707,6 +8975,30 @@ impl
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::slive::models::play::PlayLine> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.url.into_into_dart().into_dart(),
+            self.0.kind.into_into_dart().into_dart(),
+            self.0.host.into_into_dart().into_dart(),
+            self.0.hint.into_into_dart().into_dart(),
+            self.0.origin_index.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<crate::api::slive::models::play::PlayLine>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::slive::models::play::PlayLine>>
+    for crate::api::slive::models::play::PlayLine
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::slive::models::play::PlayLine> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::slive::models::account::QrCode> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -9101,6 +9393,40 @@ impl SseEncode for i64 {
     }
 }
 
+impl SseEncode for crate::api::slive::models::play::LineHint {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::slive::models::play::LineHint::Primary => 0,
+                crate::api::slive::models::play::LineHint::Mcdn => 1,
+                crate::api::slive::models::play::LineHint::Scdn => 2,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::slive::models::play::LineKind {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::slive::models::play::LineKind::Flv => 0,
+                crate::api::slive::models::play::LineKind::Hls => 1,
+                crate::api::slive::models::play::LineKind::Other => 2,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
 impl SseEncode for Vec<String> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -9189,6 +9515,16 @@ impl SseEncode for Vec<crate::api::slive::models::message::LiveSuperChatMessage>
             <crate::api::slive::models::message::LiveSuperChatMessage>::sse_encode(
                 item, serializer,
             );
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::slive::models::play::PlayLine> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::slive::models::play::PlayLine>::sse_encode(item, serializer);
         }
     }
 }
@@ -9515,6 +9851,17 @@ impl SseEncode for Option<Vec<crate::api::slive::models::message::LiveMessageEmo
                 value, serializer,
             );
         }
+    }
+}
+
+impl SseEncode for crate::api::slive::models::play::PlayLine {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.url, serializer);
+        <crate::api::slive::models::play::LineKind>::sse_encode(self.kind, serializer);
+        <String>::sse_encode(self.host, serializer);
+        <crate::api::slive::models::play::LineHint>::sse_encode(self.hint, serializer);
+        <usize>::sse_encode(self.origin_index, serializer);
     }
 }
 
